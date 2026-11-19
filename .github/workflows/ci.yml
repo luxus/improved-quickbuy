@@ -1,0 +1,29 @@
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Assemble (no modlock in CI)
+        run: sh tools/assemble.sh
+      - name: Stand-in tests
+        run: node test/test.js
+      - name: Addon Settings with two addons (registry)
+        run: sh examples/hello-addon/build.sh && node test/registry.js
+      - name: Negative controls (mutants)
+        run: sh test/mutants.sh | tee mutants.txt && ! grep -q -e SURVIVED -e BROKEN mutants.txt
+      - name: Release artifacts match their digests
+        run: |
+          mkdir -p /tmp/rel
+          for f in release/*.vpk.sha256; do
+            n=$(basename "$f" .sha256); base64 -d "release/$n.b64" > "/tmp/rel/$n"
+            (cd /tmp/rel && sha256sum -c "$GITHUB_WORKSPACE/$f")
+          done

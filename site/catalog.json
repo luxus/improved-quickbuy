@@ -1,0 +1,12 @@
+{
+  "snapshotId": "2026-11-19-3",
+  "items": [
+    {
+      "id": "improved-quickbuy",
+      "title": "Improved Quickbuy",
+      "availability": "available",
+      "isNsfw": false,
+      "detailUrl": "./mods/improved-quickbuy.json"
+    }
+  ]
+}
