@@ -6,7 +6,7 @@
 const C = { sched: 0, finds: 0, nodes: 0, childReads: 0, reads: 0, classWrites: 0, classChanges: 0, textWrites: 0, textChanges: 0, images: 0, styleWrites: 0, created: 0 };
 const resetCounts = () => Object.keys(C).forEach(k => { C[k] = 0; });
 
-let now = 0, seq = 0, jobs = [], handlers = [], errors = [], info = [];
+let now = 0, seq = 0, jobs = [], handlers = [], errors = [], info = [], tip = null, tips = [];
 // the script's one-time status lines (load, first update, strip shown); anything else it logs is an error
 const INFO = /^(Improved Quickbuy: ((?:v\d+|\d+\.\d+\.\d+) loaded|first update: |HUD row built )|Addon Settings: (build \d+ hosts|no Esc menu ))/;
 const storage = {};
@@ -68,7 +68,7 @@ global.$ = {
 	},
 	Schedule: (t, f) => { C.sched++; const j = { due: now + Math.max(0, t), f, id: ++seq }; jobs.push(j); return j.id; },
 	CancelScheduled: id => { jobs = jobs.filter(j => j.id !== id); },
-	DispatchEvent(ev, p) { C.dispatches = (C.dispatches || 0) + 1; if (ev === 'Activated' && p && p.valid && p.events.onactivate) p.events.onactivate(); }, Localize: s => s, Msg: m => { (INFO.test(m) ? info : errors).push('msg: ' + m); },
+	DispatchEvent(ev, p, arg) { C.dispatches = (C.dispatches || 0) + 1; if (ev === 'Activated' && p && p.valid && p.events.onactivate) p.events.onactivate(); if (ev === 'UIShowTextTooltip') { tip = { p: p, text: arg == null ? '' : String(arg) }; tips.push({ ev: ev, p: p, text: tip.text }); } if (ev === 'UIHideTextTooltip') { tips.push({ ev: ev, p: p }); if (tip && tip.p === p) tip = null; } }, Localize: s => s, Msg: m => { (INFO.test(m) ? info : errors).push('msg: ' + m); },
 	RegisterForUnhandledEvent: (ev, f) => handlers.push({ ev, p: null, f }),
 	RegisterEventHandler: (ev, p, f) => { const id = ++seq; handlers.push({ ev, p, f, id }); return id; },
 	UnregisterEventHandler: (ev, p, id) => { handlers = handlers.filter(h => h.id !== id); }
@@ -112,7 +112,7 @@ const entry = (parent, name, cost, extra) => {
 const H = {};
 // layout: 'vanilla' (Valve's hud_quickbuy.xml, Improved Quickbuy) or 'v7' (the old mod's layout additions)
 const buildHud = (layout, queueItems) => {
-	jobs = []; handlers = []; errors = []; info = [];
+	jobs = []; handlers = []; errors = []; info = []; tip = null; tips = [];
 	H.layout = layout;
 	const root = H.root = mk('Panel', null, 'CitadelHud');
 	filler(root, 120, 'TopBar');
@@ -233,4 +233,4 @@ const shown = p => {
 };
 
 const load = src => { (0, eval)(src); };
-module.exports = { C, resetCounts, advance, P, H, mk, entry, buildHud, shown, press, load, storage, net, get handlers() { return handlers; }, get errors() { return errors; }, get info() { return info; }, get jobs() { return jobs; }, get now() { return now; } };
+module.exports = { C, resetCounts, advance, P, H, mk, entry, buildHud, shown, press, load, storage, net, get handlers() { return handlers; }, get errors() { return errors; }, get info() { return info; }, get jobs() { return jobs; }, get now() { return now; }, get tip() { return tip; }, get tips() { return tips; } };

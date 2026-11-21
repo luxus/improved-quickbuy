@@ -122,12 +122,21 @@ assert(changed.length === 0, 'outside the menu nothing of the HUD changed: ' + c
 // ===== 4. options =====
 click('IqbTab');
 const row = k => byId('IqbRow_' + k);
-const wordsOn = row('on').kids.find(k => k.cls.has('HudppRowText'));
-const descOn = wordsOn && wordsOn.kids.find(k => k.cls.has('HudppRowDesc'));
 const swOn = row('on').kids.find(k => k.cls.has('HudppSwitch'));
-assert(row('on').applied.height === 'fit-children' && row('on').applied.flowChildren === 'right', 'toggle row is not HUD++\'s 34 px line: ' + JSON.stringify(row('on').applied));
-assert(wordsOn && wordsOn.applied.flowChildren === 'down' && wordsOn.applied.width === 'fill-parent-flow(1)', 'title and description stack in their own column');
-assert(descOn && descOn._text.length > 0 && descOn.parent === wordsOn && swOn && swOn.parent === row('on'), 'description and switch are distinct slots, not over the label');
+const titleOn = row('on').kids.find(k => k.cls.has('HudppRowTitle'));
+assert(!row('on').kids.some(k => k.cls.has('HudppRowText') || k.cls.has('HudppRowDesc')) && row('on').applied.height === undefined, 'toggle row has no description line under the title and does not override HUD++\'s 34 px height: ' + JSON.stringify(row('on').applied));
+assert(titleOn && swOn && titleOn.parent === row('on') && swOn.parent === row('on'), 'title and switch are direct children of the toggle row');
+assert(!row('on').kids.some(k => k.cls.has('HudppChildMark')) && row('hud').kids.some(k => k.cls.has('HudppChildMark')) && row('runningTotals').kids.some(k => k.cls.has('HudppChildMark')), 'toggle rows that need Enable get the HUD++ child indent; Enable itself does not');
+assert(!row('count').kids.some(k => k.cls.has('HudppRowDesc')), 'slider row has no description line (HUD++ sliders have no desc tooltip)');
+assert(typeof row('on').events.onmouseover === 'function' && typeof row('on').events.onmouseout === 'function', 'Enable row hooks hover for Valve\'s text tooltip');
+row('on').events.onmouseover();
+assert(S.tip && S.tip.p === row('on') && S.tip.text === 'Souls still missing for your quickbuy items, in the HUD and in the shop.', 'hovering Enable shows its description as Valve\'s text tooltip: ' + (S.tip && S.tip.text));
+row('on').events.onmouseout();
+assert(!S.tip, 'leaving the row hides the tooltip');
+row('hud').events.onmouseover();
+assert(S.tip && /badge/.test(S.tip.text), 'Show Missing Souls tooltip: ' + (S.tip && S.tip.text));
+row('hud').events.onmouseout();
+assert(!S.tip, 'leaving Show Missing Souls hides the tooltip');
 assert(row('on').cls.has('HudppOn') && row('hud').cls.has('HudppOn') && byId('IqbCountBar') && byId('IqbCountBar').cls.has('HudppSlider') && byId2(byId('IqbCountBar'), 'SliderThumb').kids.some(k => k.cls.has('HudppThumbDot')), 'rows built with HUD++ markup, slider with thumb dot');
 assert(Math.abs(byId('IqbCountBar').value - 0.5) < 1e-6 && byId2(row('count'), '').parent, 'slider sits at 3 of 1..5');
 click('IqbCountUp'); advance(0.3);
@@ -219,7 +228,7 @@ buildHud('vanilla'); H.stats.cls.add('gShopOpen'); S.load(SRC); advance(2);
 assert(!stripShown() && total() !== '', 'HUD loads with the shop open: shop mode from the class');
 start();
 // console: one load line and one first-update line, so a game log shows whether the script ran
-assert(S.info.length === 4 && /1\.0\.2 loaded/.test(S.info[0]) && S.info.some(m => /Addon Settings: build \d+ hosts; settings as tabs in CompLock/.test(m)) && S.info.some(m => /queue 3, souls found/.test(m)), 'console lines once: ' + S.info.join(' | '));
+assert(S.info.length === 4 && /1\.0\.3 loaded/.test(S.info[0]) && S.info.some(m => /Addon Settings: build \d+ hosts; settings as tabs in CompLock/.test(m)) && S.info.some(m => /queue 3, souls found/.test(m)), 'console lines once: ' + S.info.join(' | '));
 advance(5);
 assert(S.info.length === 4, 'no further console lines while running');
 // a component queued before its upgrade is not paid twice (Extra Health -> Colossus, from abilities.vdata)
@@ -472,6 +481,13 @@ withLang(() => { delete $.Language; }, () => {
 });
 // a language without a table: English
 withLang(() => { $.Language = () => 'vietnamese'; }, () => { start(); openQuickbuy(); assert(words(byId('IqbBody')).includes('Running Totals') && words(byId('IqbFoot')).includes('Reset Quickbuy'), 'Vietnamese (no table): English'); });
+withLang(() => { $.Language = () => 'french'; }, () => {
+	start(); openQuickbuy();
+	assert(typeof byId('IqbRow_on').events.onmouseover === 'function', 'French Enable row hooks hover');
+	byId('IqbRow_on').events.onmouseover();
+	assert(S.tip && !/'/.test(S.tip.text) && /dachat rapide/.test(S.tip.text), 'French tooltip strips apostrophes like HUD++: ' + (S.tip && S.tip.text));
+	byId('IqbRow_on').events.onmouseout();
+});
 // $.Language broken: English, no error
 withLang(() => { $.Language = () => { throw new Error('no'); }; }, () => { start(); openQuickbuy(); assert(words(byId('IqbBody')).includes('Enable') && S.errors.filter(e => !/language/.test(e)).length === 0, 'broken $.Language: English: ' + S.errors.join(' | ')); });
 // the game's loc file loaded: its text wins over the table
