@@ -1,4 +1,0 @@
-build/
-vanilla/*.vxml_c
-site/files/*.vpk
-examples/hello-addon/build/
