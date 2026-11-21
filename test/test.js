@@ -31,7 +31,7 @@ const tags = () => H.items.map(i => { const t = i.kids.length && byId2(i, 'IqbRu
 const document_count = id => { let n = 0; const w = p => p.kids.forEach(k => { if (k.id === id) n++; w(k); }); w(H.root); return n; };
 const byId2 = (root, id) => { const w = p => { for (const k of p.kids) { if (k.id === id) return k; const r = w(k); if (r) return r; } return null; }; return w(root); };
 const total = () => { const t = byId('IqbQueueTotal'); return t && t.applied.visibility === 'visible' ? t._text : ''; };
-const bodies = () => [['hud', H.hudBody], ['xh', H.xhBody], ['shop', byId('IqbBody')]].filter(([, b]) => b && shown(b)).map(([k]) => k).join(',');
+const bodies = () => [['hud', H.hudBody], ['mm', H.mmBody], ['xh', H.xhBody], ['shop', byId('IqbBody')]].filter(([, b]) => b && shown(b)).map(([k]) => k).join(',');
 
 // ===== 1. fresh install, store empty: defaults =====
 for (const k in storage) delete storage[k];
@@ -85,6 +85,10 @@ advance(0.3);
 assert(byId('IqbTab') && byId('IqbTab').parent.cls.has('HudppTabs') && bodies() === 'hud', 'Shop tab added within 0.25 s, menu still on HUD');
 click('IqbTab');
 assert(bodies() === 'shop' && H.foot.applied.visibility === 'collapse' && byId('IqbFoot').applied.visibility === 'visible' && byId('IqbTab').cls.has('HudppSelected') && !H.tabs.hud.cls.has('HudppSelected'), 'Shop tab: only our body and foot shown, HUD++ foot (status, reset) hidden, our tab selected');
+H.tabs.mm.events.onactivate(); advance(0.06);
+assert(bodies() === 'mm' && !byId('IqbTab').cls.has('HudppSelected') && H.foot.applied.visibility === 'visible', 'Shop -> Minimap: only the Minimap body shown');
+click('IqbTab'); advance(0.06);
+assert(bodies() === 'shop', 'Minimap -> Shop: HUD++ bodies stay hidden under the 3-tab CSS');
 H.tabs.xh.events.onactivate(); advance(0.06);
 assert(bodies() === 'xh' && !byId('IqbTab').cls.has('HudppSelected') && H.foot.applied.visibility === 'visible' && byId('IqbFoot').applied.visibility === 'collapse', 'Shop -> Crosshair: Crosshair shown within one 50 ms check');
 click('IqbTab'); H.tabs.hud.events.onactivate(); advance(0.06);
@@ -95,7 +99,7 @@ click('IqbTab'); advance(0.1);
 H.menuButton.events.onactivate(); advance(0.1);
 assert(!H.menu.cls.has('HudppOpen'), 'button again: HUD++ closes the menu');
 H.menuButton.events.onactivate(); advance(0.3);
-assert(H.menu.cls.has('HudppOpen') && bodies() === H.tab && H.menu.FindChildrenWithClassTraverse('HudppTab').length === 3, 'reopened (HUD++ refresh puts its tab back), no second Shop tab');
+assert(H.menu.cls.has('HudppOpen') && bodies() === H.tab && H.menu.FindChildrenWithClassTraverse('HudppTab').length === 4, 'reopened (HUD++ refresh puts its tab back), no second Shop tab');
 H.menuButton.events.onactivate(); advance(0.1);
 const after = hudClasses();
 H.menuButton.events.onactivate(); advance(0.3);
@@ -105,6 +109,12 @@ assert(changed.length === 0, 'outside the menu nothing of the HUD changed: ' + c
 // ===== 4. options =====
 click('IqbTab');
 const row = k => byId('IqbRow_' + k);
+const wordsOn = row('on').kids.find(k => k.cls.has('HudppRowText'));
+const descOn = wordsOn && wordsOn.kids.find(k => k.cls.has('HudppRowDesc'));
+const swOn = row('on').kids.find(k => k.cls.has('HudppSwitch'));
+assert(row('on').applied.height === 'fit-children' && row('on').applied.flowChildren === 'right', 'toggle row is not HUD++\'s 34 px line: ' + JSON.stringify(row('on').applied));
+assert(wordsOn && wordsOn.applied.flowChildren === 'down' && wordsOn.applied.width === 'fill-parent-flow(1)', 'title and description stack in their own column');
+assert(descOn && descOn._text.length > 0 && descOn.parent === wordsOn && swOn && swOn.parent === row('on'), 'description and switch are distinct slots, not over the label');
 assert(row('on').cls.has('HudppOn') && row('hud').cls.has('HudppOn') && byId('IqbCountBar') && byId('IqbCountBar').cls.has('HudppSlider') && byId2(byId('IqbCountBar'), 'SliderThumb').kids.some(k => k.cls.has('HudppThumbDot')), 'rows built with HUD++ markup, slider with thumb dot');
 assert(Math.abs(byId('IqbCountBar').value - 0.5) < 1e-6 && byId2(row('count'), '').parent, 'slider sits at 3 of 1..5');
 click('IqbCountUp'); advance(0.3);
@@ -196,7 +206,7 @@ buildHud('vanilla'); H.stats.cls.add('gShopOpen'); S.load(SRC); advance(2);
 assert(!stripShown() && total() !== '', 'HUD loads with the shop open: shop mode from the class');
 start();
 // console: one load line and one first-update line, so a game log shows whether the script ran
-assert(S.info.length === 4 && /v10 loaded/.test(S.info[0]) && S.info.some(m => /Addon Settings: build \d+ hosts; settings as tabs in CompLock/.test(m)) && S.info.some(m => /queue 3, souls found/.test(m)), 'console lines once: ' + S.info.join(' | '));
+assert(S.info.length === 4 && /1\.0\.1 loaded/.test(S.info[0]) && S.info.some(m => /Addon Settings: build \d+ hosts; settings as tabs in CompLock/.test(m)) && S.info.some(m => /queue 3, souls found/.test(m)), 'console lines once: ' + S.info.join(' | '));
 advance(5);
 assert(S.info.length === 4, 'no further console lines while running');
 // a component queued before its upgrade is not paid twice (Extra Health -> Colossus, from abilities.vdata)

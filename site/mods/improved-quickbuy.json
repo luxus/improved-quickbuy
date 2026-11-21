@@ -15,20 +15,20 @@
     "hudpp"
   ],
   "release": {
-    "id": "1.0.0",
-    "contentRevision": "sha256-57dc1d4fb2f81d33",
-    "version": "1.0.0",
+    "id": "1.0.1",
+    "contentRevision": "sha256-f8eef7eaa15511e0",
+    "version": "1.0.1",
     "artifacts": [
       {
         "id": "improved-quickbuy-vpk",
-        "filename": "improved-quickbuy-1.0.0.vpk",
+        "filename": "improved-quickbuy-1.0.1.vpk",
         "format": "vpk",
         "download": {
-          "url": "../files/improved-quickbuy-1.0.0.vpk"
+          "url": "../files/improved-quickbuy-1.0.1.vpk"
         },
-        "size": 127047,
+        "size": 128273,
         "hashes": {
-          "sha256": "57dc1d4fb2f81d338014d1cbf038a79b0c804e0db214146ccde4d898c1f54507"
+          "sha256": "f8eef7eaa15511e09d9a3a40a744906564b708d593b2d89242bdfdf9432f2f92"
         }
       }
     ],

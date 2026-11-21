@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-21
+
+### Fixed
+
+- The Quickbuy settings tab works again with [CompLock HUD++](https://deadlockconfig.com/) from 20/21 Nov (HUD, Minimap, and Crosshair tabs). The old hook showed HUD++'s own bodies on top of the Quickbuy tab.
+- Toggle rows in that menu show their label, description and switch in distinct slots again. HUD++'s 20/21 Nov row CSS is a single 34 px line without a description slot, which had stacked the description on the label and clipped the switch.
+
 ## [1.0.0] - 2026-11-19
 
 First public release.
@@ -25,5 +32,6 @@ First public release.
 - [Addon Settings](https://github.com/luxus/improved-quickbuy/blob/main/docs/ADDON-SETTINGS-API.md), the settings library behind the tab and the window, which other mods can vendor for their own tabs (`lib/addon-settings/`, example in `examples/hello-addon`).
 - Rewritten from scratch with performance in mind.
 
-[Unreleased]: https://github.com/luxus/improved-quickbuy/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/luxus/improved-quickbuy/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/luxus/improved-quickbuy/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/luxus/improved-quickbuy/releases/tag/v1.0.0
