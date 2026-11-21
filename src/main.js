@@ -7,7 +7,7 @@
 // quickbuy panel or by direct child lookups, and every class, text and image is written only on change.
 // HUD++'s panels get no event handlers (v6 of the old mod blocked its menu that way).
 
-const VERSION = 'v10';
+const VERSION = '1.0.1';
 const ok = p => !!(p && p.IsValid && p.IsValid());
 const cancel = h => { if (h) { try { $.CancelScheduled(h); } catch (e) { /* already ran */ } } return null; };
 const say = e => { try { $.Msg('Improved Quickbuy: ' + e); } catch (x) { /* no console */ } };
