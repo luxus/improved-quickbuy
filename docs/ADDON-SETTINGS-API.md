@@ -10,7 +10,7 @@ only the public API described here.
 - Values are stored on the same store page CompLock uses (deadlockconfig.com), one key per addon:
   `<id>_settings`. A HUD reload in the same game reads a session copy instead of loading the page again.
 
-Version: library `1.1.0`, `BUILD` 2, wire `API` 1.
+Version: library `1.1.1`, `BUILD` 3, wire `API` 1.
 
 ## Quick start
 
@@ -43,7 +43,7 @@ Each control:
 | --- | --- | --- |
 | `key` | all | `[A-Za-z][A-Za-z0-9_]*`, the value's name. |
 | `type` | all | `toggle`, `slider` or `select`. |
-| `title`, `desc` | all | Text. `desc` is shown under toggles only. |
+| `title`, `desc` | all | Text. `desc` is shown under toggles only (a column of title + description, switch on the right). In CompLock HUD++ from 20/21 Nov this layout is applied inline: that build's row CSS is a single 34 px line and no longer styles `.HudppRowText` or `.HudppRowDesc`. |
 | `section` | all | Text. Rows with the same section are grouped under its title. |
 | `default` | all | Used until a saved value arrives, and by **Reset tab**. |
 | `needs` | all | Keys of toggles that must be on for this row to be active (greyed out otherwise). |
@@ -115,8 +115,10 @@ loc files, the same tokens resolve from them with no code change.
 
 - **CompLock HUD++ present:** the host adds a tab button per addon to CompLock's tab bar once HUD++ has
   built its menu. A tab's body and foot (status line, **Reset tab**) are built on its first click. While one
-  of our tabs is shown, HUD++'s own foot (its status and reset, which act on its own tabs) is hidden. The
-  library never registers handlers on HUD++'s panels and never writes CompLock's settings.
+  of our tabs is shown, HUD++'s own bodies are hidden with an inline visibility and its foot (status and
+  reset, which act on its own tabs) is hidden. This works with both the 18 Nov two-tab CSS and the 20/21 Nov
+  three-tab inverted CSS (HUD, Minimap, Crosshair); the library does not toggle `HudppTab_*` classes to hide
+  those bodies. The library never registers handlers on HUD++'s panels and never writes CompLock's settings.
 - **No HUD++:** the **ADDONS** button sits above Valve's settings row in the Esc menu. The window, its head
   and close button are built on the first open, a page per addon on its first selection. Clicks inside the
   window stay in it. The X button or the ADDONS button close it; it hides with the Esc menu. The last

@@ -8,7 +8,7 @@ const resetCounts = () => Object.keys(C).forEach(k => { C[k] = 0; });
 
 let now = 0, seq = 0, jobs = [], handlers = [], errors = [], info = [];
 // the script's one-time status lines (load, first update, strip shown); anything else it logs is an error
-const INFO = /^(Improved Quickbuy: (v\d+ loaded|first update: |HUD row built )|Addon Settings: (build \d+ hosts|no Esc menu ))/;
+const INFO = /^(Improved Quickbuy: ((?:v\d+|\d+\.\d+\.\d+) loaded|first update: |HUD row built )|Addon Settings: (build \d+ hosts|no Esc menu ))/;
 const storage = {};
 const net = { online: true, writes: [] };
 
@@ -185,7 +185,7 @@ const press = (b, xml) => { const hs = handlers.filter(h => h.p === b && h.ev ==
 
 // HUD++'s menu as hudpp_menu.js builds and drives it
 H.refresh = () => {
-	['hud', 'xh'].forEach(t => { H.menu.SetHasClass('HudppTab_' + t, t === H.tab); H.tabs[t].SetHasClass('HudppSelected', t === H.tab); });
+	['hud', 'mm', 'xh'].forEach(t => { H.menu.SetHasClass('HudppTab_' + t, t === H.tab); H.tabs[t].SetHasClass('HudppSelected', t === H.tab); });
 };
 H.openMenu = () => {
 	H.esc.cls.add('ShowEscapeMenu');
@@ -194,28 +194,36 @@ H.openMenu = () => {
 		filler(mk('Panel', m, '', 'HudppHead'), 4, 'Head');
 		const bar = mk('Panel', m, '', 'HudppTabs');
 		H.tabs = {};
-		[['hud', 'HUD'], ['xh', 'Crosshair']].forEach(([k, l]) => {
+		[['hud', 'HUD'], ['mm', 'Minimap'], ['xh', 'Crosshair']].forEach(([k, l]) => {
 			const b = mk('Button', bar, '', 'HudppTab'); mk('Label', b, '', 'HudppTabLabel', l);
 			b.events.onactivate = () => press(b, () => { H.tab = k; H.refresh(); });
 			H.tabs[k] = b;
 		});
 		H.hudBody = mk('Panel', m, '', 'HudppBody HudppBodyHud'); filler(H.hudBody, 20, 'HudRow');
+		H.mmBody = mk('Panel', m, '', 'HudppBody HudppBodyMm'); filler(H.mmBody, 25, 'MmRow');
 		H.xhBody = mk('Panel', m, '', 'HudppBody HudppBodyXh'); filler(H.xhBody, 30, 'XhRow');
 		const foot = H.foot = mk('Panel', m, '', 'HudppFoot'); const main = mk('Panel', foot, '', 'HudppFootMain');
 		mk('Label', main, '', 'HudppStatus'); H.reset = mk('Button', main, '', 'HudppTextButton HudppResetAll');
+		H.tab = 'hud';
 	}
 	H.menu.AddClass('HudppOpen'); H.refresh();
 };
 H.closeMenu = () => { H.menu.RemoveClass('HudppOpen'); H.esc.cls.delete('ShowEscapeMenu'); };
 
-// what the player sees: inline visibility (as applied), else HUD++'s tab rule (hudpp_menu.css)
+// what the player sees: inline visibility (as applied), else HUD++'s tab rule as of the 20/21 Nov
+// menu (bodies collapse unless the matching HudppTab_* class is on an ancestor). The 18 Nov rule
+// hid the inactive body when the other tab class was set; using that here would hide the hook
+// break the 20/21 Nov CSS introduced.
 const shown = p => {
 	for (let q = p; q; q = q.parent) {
 		const v = q.applied.visibility;
 		if (v === 'collapse') return false;
 		if (v === 'visible') continue;
 		const up = c => { for (let a = q.parent; a; a = a.parent) if (a.cls.has(c)) return true; return false; };
-		if ((q.cls.has('HudppBodyXh') && up('HudppTab_hud')) || (q.cls.has('HudppBodyHud') && up('HudppTab_xh'))) return false;
+		if (q.cls.has('HudppBodyHud')) { if (!up('HudppTab_hud')) return false; continue; }
+		if (q.cls.has('HudppBodyMm')) { if (!up('HudppTab_mm')) return false; continue; }
+		if (q.cls.has('HudppBodyXh')) { if (!up('HudppTab_xh')) return false; continue; }
+		if (q.cls.has('HudppBody')) return false;
 	}
 	return true;
 };
