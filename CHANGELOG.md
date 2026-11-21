@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-11-21
+
+### Fixed
+
+- Toggle rows in the CompLock Quickbuy tab match [CompLock HUD++](https://deadlockconfig.com/)'s own rows: a compact 34 px line with the title on the left and the switch on the right. The description is a tooltip on hover (Valve's `UIShowTextTooltip`, the same event HUD++ uses), not a second line under the title. Sub-rows that depend on Enable get HUD++'s child indent. The Reset Quickbuy button and the Crosshair tab fix are unchanged.
+
 ## [1.0.2] - 2026-11-21
 
 ### Fixed
@@ -39,7 +45,8 @@ First public release.
 - [Addon Settings](https://github.com/luxus/improved-quickbuy/blob/main/docs/ADDON-SETTINGS-API.md), the settings library behind the tab and the window, which other mods can vendor for their own tabs (`lib/addon-settings/`, example in `examples/hello-addon`).
 - Rewritten from scratch with performance in mind.
 
-[Unreleased]: https://github.com/luxus/improved-quickbuy/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/luxus/improved-quickbuy/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/luxus/improved-quickbuy/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/luxus/improved-quickbuy/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/luxus/improved-quickbuy/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/luxus/improved-quickbuy/releases/tag/v1.0.0
