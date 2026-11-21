@@ -10,7 +10,7 @@ only the public API described here.
 - Values are stored on the same store page CompLock uses (deadlockconfig.com), one key per addon:
   `<id>_settings`. A HUD reload in the same game reads a session copy instead of loading the page again.
 
-Version: library `1.1.2`, `BUILD` 4, wire `API` 1.
+Version: library `1.1.3`, `BUILD` 5, wire `API` 1.
 
 ## Quick start
 
@@ -44,7 +44,7 @@ Each control:
 | --- | --- | --- |
 | `key` | all | `[A-Za-z][A-Za-z0-9_]*`, the value's name. |
 | `type` | all | `toggle`, `slider` or `select`. |
-| `title`, `desc` | all | Text. `desc` is shown under toggles only (a column of title + description, switch on the right). In CompLock HUD++ from 20/21 Nov this layout is applied inline: that build's row CSS is a single 34 px line and no longer styles `.HudppRowText` or `.HudppRowDesc`. |
+| `title`, `desc` | all | Text. `desc` is the row's tooltip: on hover the library fires Valve's `UIShowTextTooltip` (the same event HUD++ and the escape menu use; apostrophes and backslashes are stripped because the game quotes the event string with `'`). Toggle rows are a compact 34 px line (title left, switch right), like HUD++'s own rows, including the `HudppChildMark` indent when `needs` is set. Sliders have no description tooltip (HUD++ sliders only tip "Reset to …" on a changed value). |
 | `section` | all | Text. Rows with the same section are grouped under its title. |
 | `default` | all | Used until a saved value arrives, and by **Reset tab**. |
 | `needs` | all | Keys of toggles that must be on for this row to be active (greyed out otherwise). |
