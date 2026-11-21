@@ -8,7 +8,7 @@ A Deadlock HUD mod that shows the next items in your quickbuy queue and how many
 - Shop: running totals per queued item and a total for the whole queue
 - Integrated into CompLock HUD++: its own "Quickbuy" tab, every feature togglable
 - Works without HUD++: an ADDONS button in the Esc menu opens its own settings window
-- "Reset tab" back to the defaults, and a "Saved" line, like CompLock's own tabs
+- "Reset Quickbuy" on the right of the settings foot puts options back to the defaults, and a "Saved" line, like CompLock's own tabs
 - In every language Deadlock ships, following the game's language
 - Its settings menu is [Addon Settings](docs/ADDON-SETTINGS-API.md), a small library other mods can use for their own tabs
 - Rewritten from scratch with performance in mind
@@ -22,7 +22,7 @@ A Deadlock HUD mod that shows the next items in your quickbuy queue and how many
   - Improved Quickbuy: Enable on/off
   - HUD: Show Missing Souls on/off; Items Shown, 1 to 5 (independent of each other), with the same slider as CompLock's own
   - Shop: Running Totals on/off; Queue Total on/off
-- **Reset tab** puts these options back to their defaults.
+- **Reset Quickbuy** (button on the right of the settings foot) puts these options back to their defaults. The CompLock tab title stays **Quickbuy**.
 - **Languages:** texts follow the game's client language: English, German, French, Spanish (Spain and Latin America), Brazilian Portuguese, Italian, Polish, Czech, Russian, Ukrainian, Turkish, Indonesian, Thai, Japanese, Korean, Simplified and Traditional Chinese. Anything else falls back to English. Game terms (souls, items, shop, quickbuy) use Valve's own translations. English and German are written by hand; **the other translations are machine-made, corrections and pull requests are welcome** (`src/strings.js`, and the library's words in `lib/addon-settings/addon_settings.js`). Where Valve's word for Quickbuy is too wide for CompLock's tab bar, the tab says "Quickbuy".
 - **Saving:** settings are stored the way CompLock stores its own. A hidden page on deadlockconfig.com keeps them in its local storage, under the key `improved_quickbuy_settings`. If the page can't be reached, your settings last until the game closes.
 
@@ -41,7 +41,7 @@ deadlock-mod-manager://sources/add?url=https%3A%2F%2Fluxus.github.io%2Fimproved-
 deadlock-mod-manager://sources/install?url=https%3A%2F%2Fluxus.github.io%2Fimproved-quickbuy%2Fdmm-source.json&source=luxus&listing=improved-quickbuy
 ```
 
-**Manually:** download `improved-quickbuy-1.0.1.vpk` from the [releases](https://github.com/luxus/improved-quickbuy/releases), rename it to a free slot such as `pak03_dir.vpk` and put it into `Deadlock/game/citadel/addons/`. The load order against CompLock HUD++ does not matter: HUD++ does not ship the quickbuy layout.
+**Manually:** download `improved-quickbuy-1.0.2.vpk` from the [releases](https://github.com/luxus/improved-quickbuy/releases), rename it to a free slot such as `pak03_dir.vpk` and put it into `Deadlock/game/citadel/addons/`. The load order against CompLock HUD++ does not matter: HUD++ does not ship the quickbuy layout.
 
 **CompLock HUD++ is optional.** With it, the options are a Quickbuy tab in CompLock's menu (Esc → COMPLOCK). Without it, the Esc menu gets an ADDONS button that opens a small window of our own with the same options, built on first open. Settings are kept across game restarts either way (our own hidden HTML panel loads the same store page CompLock uses).
 
@@ -55,7 +55,7 @@ deadlock-mod-manager://sources/install?url=https%3A%2F%2Fluxus.github.io%2Fimpro
 - `vanilla/hud_quickbuy.xml`: Valve's quickbuy layout. It is the only game file this mod replaces, because a script can only be added to the quickbuy panel through its layout. `tools/layout.py` adds two includes (our style sheet and our script) and changes nothing else. CompLock HUD++ replaces `hud.xml` and `hud_quickbuy.css`, and this mod touches neither.
 - Everything this mod shows is created at run time.
 
-To build, run `tools/build.sh`, which writes `build/improved-quickbuy.vpk`. It needs `modlock` (`MODLOCK=...`). `tools/assemble.sh` does everything up to the compile step and is what CI and the tests use. Release 1.0.1 is a patch for CompLock HUD++ from 20/21 Nov (the console says `1.0.1 loaded`). Release 1.0.0 was build v10.
+To build, run `tools/build.sh`, which writes `build/improved-quickbuy.vpk`. It needs `modlock` (`MODLOCK=...`). `tools/assemble.sh` does everything up to the compile step and is what CI and the tests use. Release 1.0.2 keeps the CompLock tab titled Quickbuy, labels the reset button Reset Quickbuy and places it on the right, and fixes a click on Crosshair (or HUD) that did nothing when returning from Quickbuy to the same HUD++ tab (the console says `1.0.2 loaded`). Release 1.0.1 was the CompLock HUD++ 20/21 Nov menu patch. Release 1.0.0 was build v10.
 
 ### Performance design
 
@@ -69,7 +69,7 @@ To build, run `tools/build.sh`, which writes `build/improved-quickbuy.vpk`. It n
 - Saving: a burst of changes is saved once, 0.6 s after the last change, and not at all when the settings are back to what is stored. The store page is a hidden browser panel created for a load or save and deleted right after (3 s after a save), so no browser idles in the background.
 - Words are looked up once at load, never per tick.
 - While our tab is shown, a 50 ms check (two class reads) hands the menu back when CompLock switches tabs or closes.
-- The mod never attaches event handlers to CompLock's panels. An earlier mod blocked CompLock's menu from opening that way.
+- The mod never leaves event handlers on CompLock's panels. While the Quickbuy tab is shown it hooks HUD++'s tab buttons only long enough to hand a click back to HUD++'s own `showTab` (needed because that function returns at once when the clicked tab is already current), then unhooks. An earlier approach that kept a hook on the menu button blocked CompLock's menu from opening.
 - The mod never uses `world-blur`, since CompLock redraws the lower HUD at 30 fps and blanks it when a blurred panel is visible there.
 
 ## Tests
@@ -103,4 +103,4 @@ The Quickbuy tab follows the menu markup and store page of CompLock HUD++ so tha
 
 ## Console
 
-The game console (and `console.log` with `-condebug`) gets three lines per HUD load: `Improved Quickbuy: 1.0.1 loaded (<language>, words from …)`, the first update (play or shop, queue length, souls label found), and when the HUD row is first built. Errors also start with `Improved Quickbuy:`.
+The game console (and `console.log` with `-condebug`) gets three lines per HUD load: `Improved Quickbuy: 1.0.2 loaded (<language>, words from …)`, the first update (play or shop, queue length, souls label found), and when the HUD row is first built. Errors also start with `Improved Quickbuy:`.
