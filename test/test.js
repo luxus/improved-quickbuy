@@ -93,6 +93,19 @@ H.tabs.xh.events.onactivate(); advance(0.06);
 assert(bodies() === 'xh' && !byId('IqbTab').cls.has('HudppSelected') && H.foot.applied.visibility === 'visible' && byId('IqbFoot').applied.visibility === 'collapse', 'Shop -> Crosshair: Crosshair shown within one 50 ms check');
 click('IqbTab'); H.tabs.hud.events.onactivate(); advance(0.06);
 assert(bodies() === 'hud', 'Shop -> HUD');
+// HUD++ showTab returns at once when t === tab. After Crosshair, Quickbuy must still be able to
+// open Crosshair again (Kai, 21.11: click from Quickbuy to Crosshair did nothing until HUD or Minimap).
+H.tabs.xh.events.onactivate(); advance(0.06);
+assert(bodies() === 'xh', 'on Crosshair before the return trip');
+click('IqbTab'); advance(0.06);
+assert(bodies() === 'shop' && byId('IqbTab').kids[0]._text === 'Quickbuy', 'Crosshair -> Quickbuy; tab title stays Quickbuy');
+H.tabs.xh.events.onactivate(); advance(0.06);
+assert(bodies() === 'xh' && !byId('IqbTab').cls.has('HudppSelected') && H.foot.applied.visibility === 'visible', 'Quickbuy after Crosshair -> Crosshair again: Crosshair shows');
+H.tabs.hud.events.onactivate(); advance(0.06);
+click('IqbTab'); advance(0.06);
+H.tabs.hud.events.onactivate(); advance(0.06);
+assert(bodies() === 'hud', 'Quickbuy after HUD -> HUD again');
+assert(!S.handlers.some(h => h.ev === 'Activated' && h.p && [H.tabs.hud, H.tabs.mm, H.tabs.xh].includes(h.p)), 'no Activated hook left on HUD++ tabs after leaving ours');
 for (let i = 0; i < 5; i++) { click('IqbTab'); advance(0.1); H.tabs[i % 2 ? 'hud' : 'xh'].events.onactivate(); advance(0.1); }
 assert(bodies() === 'xh' || bodies() === 'hud', 'repeated switching stays consistent: ' + bodies());
 click('IqbTab'); advance(0.1);
@@ -206,7 +219,7 @@ buildHud('vanilla'); H.stats.cls.add('gShopOpen'); S.load(SRC); advance(2);
 assert(!stripShown() && total() !== '', 'HUD loads with the shop open: shop mode from the class');
 start();
 // console: one load line and one first-update line, so a game log shows whether the script ran
-assert(S.info.length === 4 && /1\.0\.1 loaded/.test(S.info[0]) && S.info.some(m => /Addon Settings: build \d+ hosts; settings as tabs in CompLock/.test(m)) && S.info.some(m => /queue 3, souls found/.test(m)), 'console lines once: ' + S.info.join(' | '));
+assert(S.info.length === 4 && /1\.0\.2 loaded/.test(S.info[0]) && S.info.some(m => /Addon Settings: build \d+ hosts; settings as tabs in CompLock/.test(m)) && S.info.some(m => /queue 3, souls found/.test(m)), 'console lines once: ' + S.info.join(' | '));
 advance(5);
 assert(S.info.length === 4, 'no further console lines while running');
 // a component queued before its upgrade is not paid twice (Extra Health -> Colossus, from abilities.vdata)
@@ -425,7 +438,8 @@ for (const k in storage) delete storage[k];
 start(); openQuickbuy();
 assert(byId('IqbTab').kids[0]._text === 'Quickbuy' && words(byId('IqbBody')).includes('Show Missing Souls') && words(byId('IqbBody')).includes('HUD'), 'English: tab, rows and sections from the table: ' + words(byId('IqbBody')).slice(0, 4).join(' | '));
 assert(!words(byId('IqbBody')).concat(words(byId('IqbFoot'))).some(x => /^#|Iqb_|AddonSettings_/.test(x)), 'English: no token shows as text');
-assert(words(byId('IqbFoot')).includes('Reset tab'), 'English: Reset tab in our foot');
+assert(words(byId('IqbFoot')).includes('Reset Quickbuy') && !words(byId('IqbFoot')).includes('Reset tab') && byId('IqbTab').kids[0]._text === 'Quickbuy', 'English: Reset Quickbuy button, tab stays Quickbuy');
+{ const ft = byId('IqbFoot'); assert(!ft.kids.some(k => k.cls.has('HudppFootMain')) && ft.kids.some(k => k.cls.has('HudppStatus')) && ft.kids[ft.kids.length - 1].id === 'IqbReset', 'reset button is a direct child of the foot, last (right-hand side), not wrapped in FootMain'); }
 assert(/\(english, words from the built-in table\)/.test(S.info[0]), 'console says language and where the words came from: ' + S.info[0]);
 H.globalClass('gShopOpen', true); advance(0.3);
 assert(/^Queue [\d,]+ - ([\d,]+ to go|ready)$/.test(total()), 'English shop total: ' + total());
@@ -443,7 +457,7 @@ assert(!('hudpp_settings' in storage), 'Reset tab never touches CompLock\'s sett
 withLang(() => { $.Language = () => 'german'; }, () => {
 	start(); openQuickbuy();
 	const w = words(byId('IqbBody'));
-	assert(w.includes('Fehlende Seelen anzeigen') && w.includes('Aktivieren') && words(byId('IqbFoot')).includes('Tab zurücksetzen'), 'German ($.Language): rows and Reset tab in German: ' + w.slice(0, 3).join(' | '));
+	assert(w.includes('Fehlende Seelen anzeigen') && w.includes('Aktivieren') && words(byId('IqbFoot')).includes('Quickbuy zurücksetzen') && !words(byId('IqbFoot')).includes('Tab zurücksetzen'), 'German ($.Language): rows and Reset Quickbuy in German: ' + w.slice(0, 3).join(' | '));
 	assert(byId('IqbTab').kids[0]._text === 'Quickbuy', 'German: tab title from the German table');
 	H.globalClass('gShopOpen', true); advance(0.3);
 	assert(/^Gesamt [\d,]+ - (noch [\d,]+|bereit)$/.test(total()), 'German shop total: ' + total());
@@ -457,7 +471,7 @@ withLang(() => { delete $.Language; }, () => {
 	assert(words(byId('IqbBody')).includes('Zwischensummen'), 'German (Language_german class): rows in German');
 });
 // a language without a table: English
-withLang(() => { $.Language = () => 'vietnamese'; }, () => { start(); openQuickbuy(); assert(words(byId('IqbBody')).includes('Running Totals') && words(byId('IqbFoot')).includes('Reset tab'), 'Vietnamese (no table): English'); });
+withLang(() => { $.Language = () => 'vietnamese'; }, () => { start(); openQuickbuy(); assert(words(byId('IqbBody')).includes('Running Totals') && words(byId('IqbFoot')).includes('Reset Quickbuy'), 'Vietnamese (no table): English'); });
 // $.Language broken: English, no error
 withLang(() => { $.Language = () => { throw new Error('no'); }; }, () => { start(); openQuickbuy(); assert(words(byId('IqbBody')).includes('Enable') && S.errors.filter(e => !/language/.test(e)).length === 0, 'broken $.Language: English: ' + S.errors.join(' | ')); });
 // the game's loc file loaded: its text wins over the table
@@ -498,7 +512,7 @@ withLang(() => { $.Language = () => 'german'; }, () => {
 	assert(head.type === 'Button' && main.type === 'Button' && typeof head.events.onactivate === 'function' && typeof main.events.onactivate === 'function', 'window head and body catch clicks (no click falls through to the Esc menu background)');
 	head.events.onactivate(); main.events.onactivate(); advance(0.1);
 	assert(byId('AddonSettingsHost').applied.visibility === 'visible', 'clicks inside the window keep it open');
-	assert(words(byId('IqbBody')).includes('Tab zurücksetzen'), 'window: Reset tab in German');
+	assert(words(byId('IqbBody')).includes('Quickbuy zurücksetzen') && !words(byId('IqbBody')).includes('Tab zurücksetzen'), 'window: Reset Quickbuy in German');
 	click('IqbRow_hud'); advance(1.5);
 	{ const st = byId('IqbBody').FindChildrenWithClassTraverse('AddonSettingsStatus')[0]; assert(st._text === 'Gespeichert' && st.applied.color === '#5fe69eaa', 'window: status Gespeichert in green'); }
 	click('IqbReset'); advance(1.5);
@@ -530,7 +544,8 @@ withLang(() => { $.Language = () => 'german'; }, () => {
 		assert(tabW(STR[l].Iqb_Tab) <= room, l + ': tab "' + STR[l].Iqb_Tab + '" fits the tab bar (' + Math.round(tabW(STR[l].Iqb_Tab)) + ' <= ' + Math.round(room) + ' px)');
 		const words = STR[l].Iqb_ItemsShown.split(' ').flatMap(w => ([...w].some(wide) ? [...w] : [w])); // CJK breaks between any two characters
 		assert(words.every(w => width(w, 15) <= 96) && width(STR[l].Iqb_ItemsShown, 15) <= 2 * 96, l + ': slider title "' + STR[l].Iqb_ItemsShown + '" fits 96 px in two lines at most');
-		assert(width(WRD[l].AddonSettings_ResetTab.toUpperCase(), 14, true, 1) + 28 <= 230, l + ': Reset tab button (' + Math.round(width(WRD[l].AddonSettings_ResetTab.toUpperCase(), 14, true, 1) + 28) + ' px) leaves room for the status line');
+		assert(width(WRD[l].AddonSettings_ResetTab.toUpperCase(), 14, true, 1) + 28 <= 230, l + ': default Reset tab button (' + Math.round(width(WRD[l].AddonSettings_ResetTab.toUpperCase(), 14, true, 1) + 28) + ' px) leaves room for the status line');
+		// Iqb_Reset is longer (e.g. "Reset Quickbuy", "Quickbuy zurücksetzen"); the button is HUD++ .HudppTextButton (168 px, text-overflow: shrink).
 		assert(width(STR[l].Iqb_TotalToGo.replace('{0}', '99,999').replace('{1}', '99,999'), 16) <= 300, l + ': shop total fits the queue header: ' + STR[l].Iqb_TotalToGo);
 		[STR[l].Iqb_ShowMissing, STR[l].Iqb_RunningTotals, STR[l].Iqb_QueueTotal, STR[l].Iqb_Enable].forEach(t => assert(width(t, 19) <= 2 * 250, l + ': row title "' + t + '" in two lines at most'));
 	});
@@ -539,7 +554,7 @@ withLang(() => { $.Language = () => 'german'; }, () => {
 		for (const k in storage) delete storage[k];
 		start(); openQuickbuy();
 		const w = words(byId('IqbBody')), f = words(byId('IqbFoot'));
-		assert(byId('IqbTab').kids[0]._text === STR[l].Iqb_Tab && w.includes(STR[l].Iqb_ShowMissing) && w.includes(STR[l].Iqb_Shop) && f.includes(WRD[l].AddonSettings_ResetTab), l + ': menu in ' + l);
+		assert(byId('IqbTab').kids[0]._text === STR[l].Iqb_Tab && w.includes(STR[l].Iqb_ShowMissing) && w.includes(STR[l].Iqb_Shop) && f.includes(STR[l].Iqb_Reset) && !f.includes(WRD[l].AddonSettings_ResetTab), l + ': menu in ' + l);
 		H.globalClass('gShopOpen', true); advance(0.3);
 		const reTotal = s => new RegExp('^' + s.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace('{0}', '[\\d,]+').replace('{1}', '[\\d,]+') + '$');
 		assert(reTotal(STR[l].Iqb_TotalToGo).test(total()) || reTotal(STR[l].Iqb_TotalReady).test(total()), l + ': shop total: ' + total());

@@ -10,7 +10,7 @@ only the public API described here.
 - Values are stored on the same store page CompLock uses (deadlockconfig.com), one key per addon:
   `<id>_settings`. A HUD reload in the same game reads a session copy instead of loading the page again.
 
-Version: library `1.1.1`, `BUILD` 3, wire `API` 1.
+Version: library `1.1.2`, `BUILD` 4, wire `API` 1.
 
 ## Quick start
 
@@ -33,6 +33,7 @@ applyMySettings(settings.values()); // defaults until the saved values arrive
 | --- | --- | --- |
 | `id` | string, `a-z 0-9 _`, 1–40 chars | Unique per addon. Store key `<id>_settings`. |
 | `title` | text | Tab and sidebar label. |
+| `resetLabel` | text | Optional. Label of the reset button (default **Reset tab**). The button sits on the right of the foot, like CompLock's own reset. |
 | `prefix` | string, `[A-Za-z][A-Za-z0-9]*` | Panel id prefix (`<prefix>Tab`, `<prefix>Body`, `<prefix>Row_<key>`). Derived from `id` if missing. |
 | `strings` | `{ <language>: { <Token>: text } }` | Optional. The addon's own words for `#Token` texts (see Languages). |
 | `controls` | array | The rows, in order. |
@@ -114,11 +115,14 @@ loc files, the same tokens resolve from them with no code change.
 ## Settings window and CompLock tabs
 
 - **CompLock HUD++ present:** the host adds a tab button per addon to CompLock's tab bar once HUD++ has
-  built its menu. A tab's body and foot (status line, **Reset tab**) are built on its first click. While one
+  built its menu. A tab's body and foot (status line, reset button on the right) are built on its first click. While one
   of our tabs is shown, HUD++'s own bodies are hidden with an inline visibility and its foot (status and
   reset, which act on its own tabs) is hidden. This works with both the 18 Nov two-tab CSS and the 20/21 Nov
   three-tab inverted CSS (HUD, Minimap, Crosshair); the library does not toggle `HudppTab_*` classes to hide
-  those bodies. The library never registers handlers on HUD++'s panels and never writes CompLock's settings.
+  those bodies. HUD++'s `showTab` returns at once when the requested tab is already its current one, so a
+  click from one of our tabs back to that same HUD++ tab (often Crosshair) would do nothing. While one of
+  our tabs is shown the library hooks those tab buttons, unhooks on leave, and Activate()s HUD++'s own
+  handler (moving it off the parked tab first if needed). It never writes CompLock's settings.
 - **No HUD++:** the **ADDONS** button sits above Valve's settings row in the Esc menu. The window, its head
   and close button are built on the first open, a page per addon on its first selection. Clicks inside the
   window stay in it. The X button or the ADDONS button close it; it hides with the Esc menu. The last

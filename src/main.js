@@ -7,7 +7,7 @@
 // quickbuy panel or by direct child lookups, and every class, text and image is written only on change.
 // HUD++'s panels get no event handlers (v6 of the old mod blocked its menu that way).
 
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const ok = p => !!(p && p.IsValid && p.IsValid());
 const cancel = h => { if (h) { try { $.CancelScheduled(h); } catch (e) { /* already ran */ } } return null; };
 const say = e => { try { $.Msg('Improved Quickbuy: ' + e); } catch (x) { /* no console */ } };
@@ -388,7 +388,7 @@ const kick = () => { dirty = true; timer = cancel(timer); timer = $.Schedule(0, 
 // The library hosts them as a "Quickbuy" tab in CompLock HUD++'s menu, or in its ADDONS window without HUD++,
 // and keeps them on deadlockconfig.com's store page under improved_quickbuy_settings (as before).
 const SCHEMA = { // '#Iqb_*': src/strings.js, in the game's language
-	id: 'improved_quickbuy', title: '#Iqb_Tab', prefix: 'Iqb', strings: STRINGS,
+	id: 'improved_quickbuy', title: '#Iqb_Tab', resetLabel: '#Iqb_Reset', prefix: 'Iqb', strings: STRINGS,
 	controls: [
 		{ key: 'on', type: 'toggle', section: '#Iqb_Section', title: '#Iqb_Enable', desc: '#Iqb_Enable_Desc', default: DEFAULTS.on },
 		{ key: 'hud', type: 'toggle', section: '#Iqb_Hud', title: '#Iqb_ShowMissing', desc: '#Iqb_ShowMissing_Desc', default: DEFAULTS.hud, needs: ['on'] },

@@ -8,7 +8,7 @@
 // and a slider title its 96 px column: test/test.js checks the widths.
 const STRINGS = {
 	english: {
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Shop',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Reset Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Shop',
 		Iqb_Enable: 'Enable',
 		Iqb_Enable_Desc: 'Souls still missing for your quickbuy items, in the HUD and in the shop.',
 		Iqb_ShowMissing: 'Show Missing Souls',
@@ -23,7 +23,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Queue {0} - ready'
 	},
 	german: { // Valve: Seelen, Gegenstände, Laden, Schnellkauf, Gesamt
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Laden',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Quickbuy zurücksetzen', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Laden',
 		Iqb_Enable: 'Aktivieren',
 		Iqb_Enable_Desc: 'Seelen, die für deine Schnellkauf-Gegenstände noch fehlen, im HUD und im Laden.',
 		Iqb_ShowMissing: 'Fehlende Seelen anzeigen',
@@ -38,7 +38,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Gesamt {0} - bereit'
 	},
 	french: { // Valve: Âmes, Objets, Boutique, Achat rapide, Total, file
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Boutique',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Réinitialiser Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Boutique',
 		Iqb_Enable: 'Activer',
 		Iqb_Enable_Desc: 'Âmes encore manquantes pour vos objets d\'achat rapide, dans le HUD et dans la boutique.',
 		Iqb_ShowMissing: 'Afficher les âmes manquantes',
@@ -53,7 +53,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Total {0} - prêt'
 	},
 	spanish: { // Valve: Almas, Objetos, Tienda, Compra rápida, Total, cola
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Tienda',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Restablecer Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Tienda',
 		Iqb_Enable: 'Activar',
 		Iqb_Enable_Desc: 'Almas que aún faltan para tus objetos de compra rápida, en el HUD y en la tienda.',
 		Iqb_ShowMissing: 'Mostrar almas que faltan',
@@ -68,7 +68,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Total {0} - listo'
 	},
 	latam: { // Valve: Almas, Objetos, Tienda, Compra rápida, Total, cola
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Tienda',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Restablecer Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Tienda',
 		Iqb_Enable: 'Activar',
 		Iqb_Enable_Desc: 'Almas que aún te faltan para tus objetos de compra rápida, en el HUD y en la tienda.',
 		Iqb_ShowMissing: 'Mostrar almas faltantes',
@@ -83,7 +83,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Total {0} - listo'
 	},
 	brazilian: { // Valve: almas, Itens, Loja, Compra rápida, Total, fila
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Loja',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Redefinir Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Loja',
 		Iqb_Enable: 'Ativar',
 		Iqb_Enable_Desc: 'Almas que ainda faltam para os seus itens de compra rápida, no HUD e na loja.',
 		Iqb_ShowMissing: 'Mostrar almas faltantes',
@@ -98,7 +98,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Total {0} - pronto'
 	},
 	italian: { // Valve: anime, Oggetti, Negozio, Acquisto rapido, Totale, coda
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Negozio',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Ripristina Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Negozio',
 		Iqb_Enable: 'Abilita',
 		Iqb_Enable_Desc: 'Anime ancora mancanti per i tuoi oggetti di acquisto rapido, nell\'HUD e nel negozio.',
 		Iqb_ShowMissing: 'Mostra anime mancanti',
@@ -113,7 +113,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Totale {0} - pronto'
 	},
 	polish: { // Valve: Dusze, Przedmioty, Sklep, Szybki zakup, Razem, kolejka
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Sklep',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Resetuj Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Sklep',
 		Iqb_Enable: 'Włącz',
 		Iqb_Enable_Desc: 'Dusze, których wciąż brakuje do przedmiotów z szybkiego zakupu, w HUD i w sklepie.',
 		Iqb_ShowMissing: 'Pokaż brakujące dusze',
@@ -128,7 +128,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Razem {0} - gotowe'
 	},
 	czech: { // Valve: duše, Předměty, Obchod, Nákupní seznam, Celkem, seznam
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Obchod',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Resetovat Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Obchod',
 		Iqb_Enable: 'Zapnout',
 		Iqb_Enable_Desc: 'Duše, které ještě chybí na předměty z nákupního seznamu, v HUD i v obchodě.',
 		Iqb_ShowMissing: 'Zobrazit chybějící duše',
@@ -143,7 +143,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Celkem {0} - připraveno'
 	},
 	russian: { // Valve: Души, Предметы, Лавка, Быстрая покупка, Всего, очередь
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Лавка',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Сбросить Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Лавка',
 		Iqb_Enable: 'Включить',
 		Iqb_Enable_Desc: 'Сколько душ ещё не хватает на предметы быстрой покупки, в HUD и в лавке.',
 		Iqb_ShowMissing: 'Показывать нехватку душ',
@@ -158,7 +158,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Всего {0} - готово'
 	},
 	ukrainian: { // Valve: Душі, Предмети, Крамниця, Швидка купівля, Усього, черга
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Крамниця',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Скинути Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Крамниця',
 		Iqb_Enable: 'Увімкнути',
 		Iqb_Enable_Desc: 'Скільки душ ще бракує на предмети швидкої купівлі, у HUD і в крамниці.',
 		Iqb_ShowMissing: 'Показувати брак душ',
@@ -173,7 +173,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Усього {0} - готово'
 	},
 	turkish: { // Valve: Ruh, Eşyalar, Dükkân, Hızlı Satın Al, Toplam, kuyruk
-		Iqb_Tab: 'Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Dükkân',
+		Iqb_Tab: 'Quickbuy', Iqb_Reset: 'Quickbuy\'ı sıfırla', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Dükkân',
 		Iqb_Enable: 'Etkinleştir',
 		Iqb_Enable_Desc: 'Hızlı satın alma eşyaların için hâlâ eksik olan ruh, HUD\'da ve dükkânda.',
 		Iqb_ShowMissing: 'Eksik Ruhu Göster',
@@ -188,7 +188,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Toplam {0} - hazır'
 	},
 	indonesian: { // Valve: Jiwa, Item, Toko, Beli Cepat, Total, Antrean
-		Iqb_Tab: 'Beli Cepat', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Toko',
+		Iqb_Tab: 'Beli Cepat', Iqb_Reset: 'Reset Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'Toko',
 		Iqb_Enable: 'Aktifkan',
 		Iqb_Enable_Desc: 'Jiwa yang masih kurang untuk item beli cepat, di HUD dan di toko.',
 		Iqb_ShowMissing: 'Tampilkan Jiwa yang Kurang',
@@ -203,7 +203,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'Total {0} - siap'
 	},
 	thai: { // Valve: โซลส์, ไอเท็ม, ร้านค้า, ซื้อด่วน, รวมทั้งหมด, คิว
-		Iqb_Tab: 'ซื้อด่วน', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'ร้านค้า',
+		Iqb_Tab: 'ซื้อด่วน', Iqb_Reset: 'รีเซ็ต Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'ร้านค้า',
 		Iqb_Enable: 'เปิดใช้งาน',
 		Iqb_Enable_Desc: 'โซลส์ที่ยังขาดสำหรับไอเท็มซื้อด่วน ใน HUD และในร้านค้า',
 		Iqb_ShowMissing: 'แสดงโซลส์ที่ยังขาด',
@@ -218,7 +218,7 @@ const STRINGS = {
 		Iqb_TotalReady: 'รวม {0} - พร้อม'
 	},
 	japanese: { // Valve: ソウル, アイテム, ショップ, クイックバイ, 合計, キュー
-		Iqb_Tab: 'クイックバイ', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'ショップ',
+		Iqb_Tab: 'クイックバイ', Iqb_Reset: 'Quickbuyをリセット', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: 'ショップ',
 		Iqb_Enable: '有効化',
 		Iqb_Enable_Desc: 'クイックバイのアイテムに足りないソウルを、HUDとショップに表示します。',
 		Iqb_ShowMissing: '不足ソウルを表示',
@@ -233,7 +233,7 @@ const STRINGS = {
 		Iqb_TotalReady: '合計 {0} - 購入可能'
 	},
 	koreana: { // Valve: 영혼, 아이템, 상점, 빠른 구매, 전체, 대기열
-		Iqb_Tab: '빠른 구매', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: '상점',
+		Iqb_Tab: '빠른 구매', Iqb_Reset: 'Quickbuy 초기화', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: '상점',
 		Iqb_Enable: '사용',
 		Iqb_Enable_Desc: '빠른 구매 아이템에 아직 부족한 영혼을 HUD와 상점에 표시합니다.',
 		Iqb_ShowMissing: '부족한 영혼 표시',
@@ -248,7 +248,7 @@ const STRINGS = {
 		Iqb_TotalReady: '전체 {0} - 구매 가능'
 	},
 	schinese: { // Valve: 魂魄, 物品, 商店, 快速购买, 总计, 队列
-		Iqb_Tab: '快速购买', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: '商店',
+		Iqb_Tab: '快速购买', Iqb_Reset: '重置 Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: '商店',
 		Iqb_Enable: '启用',
 		Iqb_Enable_Desc: '在 HUD 和商店中显示快速购买物品还差多少魂魄。',
 		Iqb_ShowMissing: '显示缺少的魂魄',
@@ -263,7 +263,7 @@ const STRINGS = {
 		Iqb_TotalReady: '总计 {0} - 可购买'
 	},
 	tchinese: { // not in SupportedLanguages; the simplified terms in traditional characters
-		Iqb_Tab: '快速購買', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: '商店',
+		Iqb_Tab: '快速購買', Iqb_Reset: '重置 Quickbuy', Iqb_Section: 'Improved Quickbuy', Iqb_Hud: 'HUD', Iqb_Shop: '商店',
 		Iqb_Enable: '啟用',
 		Iqb_Enable_Desc: '在 HUD 和商店中顯示快速購買物品還差多少魂魄。',
 		Iqb_ShowMissing: '顯示缺少的魂魄',

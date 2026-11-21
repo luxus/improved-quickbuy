@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-21
+
+### Fixed
+
+- The reset button in the CompLock Quickbuy tab is labelled "Reset Quickbuy" (and the matching phrase in the other languages) and sits on the right of the foot, like CompLock's own reset. The tab title stays "Quickbuy".
+- Clicking Crosshair (or HUD) after opening Quickbuy from that same tab works again. CompLock HUD++'s `showTab` returns at once when the requested tab is already current, so the click did nothing until another HUD++ tab was selected first.
+
 ## [1.0.1] - 2026-11-21
 
 ### Fixed
@@ -32,6 +39,7 @@ First public release.
 - [Addon Settings](https://github.com/luxus/improved-quickbuy/blob/main/docs/ADDON-SETTINGS-API.md), the settings library behind the tab and the window, which other mods can vendor for their own tabs (`lib/addon-settings/`, example in `examples/hello-addon`).
 - Rewritten from scratch with performance in mind.
 
-[Unreleased]: https://github.com/luxus/improved-quickbuy/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/luxus/improved-quickbuy/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/luxus/improved-quickbuy/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/luxus/improved-quickbuy/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/luxus/improved-quickbuy/releases/tag/v1.0.0

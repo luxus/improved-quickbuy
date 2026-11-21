@@ -38,6 +38,7 @@ class P {
 	GetChild(i) { C.childReads++; return this.kids[i] || null; }
 	MoveChildBefore(c, b) { this.kids.splice(this.kids.indexOf(c), 1); this.kids.splice(this.kids.indexOf(b), 0, c); }
 	DeleteAsync() { this.valid = false; if (this.parent) this.parent.kids.splice(this.parent.kids.indexOf(this), 1); }
+	Activate() { $.DispatchEvent('Activated', this); }
 	SetImage(src) { C.images++; this.img = src; }
 	SetURL(url) { // CitadelHTMLPanel showing store.html
 		const title = t => $.Schedule(0.05, () => handlers.filter(h => h.p === this && h.ev === 'HTMLTitle').forEach(h => h.f(this, t)));
@@ -69,7 +70,8 @@ global.$ = {
 	CancelScheduled: id => { jobs = jobs.filter(j => j.id !== id); },
 	DispatchEvent(ev, p) { C.dispatches = (C.dispatches || 0) + 1; if (ev === 'Activated' && p && p.valid && p.events.onactivate) p.events.onactivate(); }, Localize: s => s, Msg: m => { (INFO.test(m) ? info : errors).push('msg: ' + m); },
 	RegisterForUnhandledEvent: (ev, f) => handlers.push({ ev, p: null, f }),
-	RegisterEventHandler: (ev, p, f) => handlers.push({ ev, p, f })
+	RegisterEventHandler: (ev, p, f) => { const id = ++seq; handlers.push({ ev, p, f, id }); return id; },
+	UnregisterEventHandler: (ev, p, id) => { handlers = handlers.filter(h => h.id !== id); }
 };
 
 const advance = secs => {
@@ -183,7 +185,9 @@ H.globalClass = (name, on) => {
 // click, and the button's XML onactivate (HUD++'s HudppMenuToggle, its tab handlers) no longer runs
 const press = (b, xml) => { const hs = handlers.filter(h => h.p === b && h.ev === 'Activated'); if (hs.length) { hs.forEach(h => h.f(b)); return; } xml(); };
 
-// HUD++'s menu as hudpp_menu.js builds and drives it
+// HUD++'s menu as hudpp_menu.js builds and drives it. showTab returns at once when the requested
+// tab is already the current one (if (t === tab) return), so a click on that tab does nothing
+// unless something first changes HUD++'s tab variable.
 H.refresh = () => {
 	['hud', 'mm', 'xh'].forEach(t => { H.menu.SetHasClass('HudppTab_' + t, t === H.tab); H.tabs[t].SetHasClass('HudppSelected', t === H.tab); });
 };
@@ -196,7 +200,7 @@ H.openMenu = () => {
 		H.tabs = {};
 		[['hud', 'HUD'], ['mm', 'Minimap'], ['xh', 'Crosshair']].forEach(([k, l]) => {
 			const b = mk('Button', bar, '', 'HudppTab'); mk('Label', b, '', 'HudppTabLabel', l);
-			b.events.onactivate = () => press(b, () => { H.tab = k; H.refresh(); });
+			b.events.onactivate = () => press(b, () => { if (H.tab === k) return; H.tab = k; H.refresh(); });
 			H.tabs[k] = b;
 		});
 		H.hudBody = mk('Panel', m, '', 'HudppBody HudppBodyHud'); filler(H.hudBody, 20, 'HudRow');
