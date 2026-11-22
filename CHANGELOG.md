@@ -10,6 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 Test build of Improved Quickbuy 1.0.4 / Addon Settings 1.2.3. Not tagged or published yet.
 
+Addon Settings 1.2.4 (`BUILD` 11; build 10 was an unshipped test) changes the ADDONS window:
+
+- The list grows to 880 px before it scrolls, so five addons fit without cutting off the last card.
+- The status ("Saved") sits in the window head; the empty footer strip is gone.
+- The author line under each addon name is 13 px at 60 % instead of 10 px at 33 %.
+- Toggle hover no longer changes a background colour. Row and switch colours are inline, so HUD++'s `:hover` rules do not apply to them.
+- The ADDONS headline uses the game's `block` font without HUD++ too; addon names are bold.
+- The master switch tooltip opens from the title block, so it is not cut off at the right edge.
+
 ### Fixed
 
 - ADDONS list: older clients without `toggle` get their `on` (or only similarly named) toggle promoted to the header master; a section title that repeats the addon name is dropped. Reset is a small refresh icon, only if the addon has settings beyond that master, and only visible while the header is hovered. Each addon is its own card. Author is a tiny muted "by …" under the name. Child rows use left padding instead of a corner mark.
