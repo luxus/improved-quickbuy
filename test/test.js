@@ -118,7 +118,7 @@ assert(byId('IqbBody').applied.visibility === 'visible', 'with HUD++: selected b
 	const sub = row && row.parent;
 	const pack = sub && sub.kids.find(k => k.cls.has('HudppMenuRow'));
 	assert(btn && row && btn.parent === row && pack && sub.kids.indexOf(pack) + 1 === sub.kids.indexOf(row), 'with HUD++: ADDONS is its own row immediately below COMPLOCK');
-	assert(byId('changehero').applied.marginBottom === '312px' && byId('HudppPlay').applied.marginBottom === '312px', 'SWAP HERO and PLAY lifted 32px (280+32) so the extra row does not overlap them');
+	assert(byId('changehero').applied.transform === 'translateY( -32px )' && byId('HudppPlay').applied.transform === 'translateY( -32px )' && !byId('changehero').applied.marginBottom && !byId('HudppPlay').applied.marginBottom, 'SWAP HERO and PLAY lifted 32 px by transform; their CSS margin stays theirs');
 	assert(byId('IqbBody').FindChildrenWithClassTraverse('HudppSectionTitle').length >= 1, 'ADDONS page has at least one section headline');
 	assert(byId('IqbAuthor')._text === 'by luxus' && !byId('IqbAuthor').cls.has('HudppCreditBy'), 'IQB author comes from the per-addon schema under the name');
 	assert(byId('IqbAuthor').applied.fontSize === '13px' && byId('IqbAuthor').applied.color === '#ffefd799', 'author uses readable small text, not 10 px at one-third opacity');
@@ -130,9 +130,9 @@ assert(byId('IqbBody').applied.visibility === 'visible', 'with HUD++: selected b
 	assert(byId('IqbReset').cls.has('HudppIconButton') && byId('IqbReset').applied.visibility === 'collapse', 'reset is a small icon, hidden until the header is hovered');
 	assert(!byId('AddonSettingsFoot') && byId('AddonSettingsStatus').parent === byId('AddonSettingsHead') && byId('IqbReset').parent.id === 'IqbHead', 'status sits in the window head, no footer strip; per-addon reset stays on the addon header');
 	assert(parseInt(byId('AddonSettingsMain').applied.maxHeight, 10) >= 860, 'the list grows to most of the screen before it scrolls (640 px cut the fifth addon off): ' + byId('AddonSettingsMain').applied.maxHeight);
-	H.esc.cls.add('CanChangeHero');
-	click('AddonSettingsButton'); // close; liftPins refreshes
-	assert(byId('HudppPlay').applied.marginBottom === '382px', 'with CanChangeHero: PLAY lifted 350+32');
+	H.esc.cls.add('CanChangeHero'); // no ADDONS click in between: nothing of ours runs when the class arrives
+	assert(byId('HudppPlay').applied.transform === 'translateY( -32px )' && !byId('HudppPlay').applied.marginBottom, 'CanChangeHero arriving after the lift: PLAY keeps the 32 px lift and its CSS margin still follows .CanChangeHero (PLAY sat on SWAP HERO at lea 22.11. 11:03)');
+	click('AddonSettingsButton'); // close
 	click('AddonSettingsButton'); // reopen for the rest of this section
 	click('IqbMaster'); advance(0.1);
 	assert(byId('IqbBody').applied.visibility === 'collapse', 'master off hides this addon\'s settings');
