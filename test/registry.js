@@ -143,7 +143,7 @@ S.load(HELLO); advance(1);
 assert(byId('HelloBlock') && byId('HelloBlock').parent.id === 'AddonSettingsBodies' && byId('AddonSettingsBodies').kids.indexOf(byId('IqbBlock')) < byId('AddonSettingsBodies').kids.indexOf(byId('HelloBlock')), 'late registration while ADDONS is open: block is appended, no reopen needed');
 S.load(LEGACY); advance(1);
 assert(byId('LegacyBlock') && byId('LegacyBlock').parent.id === 'AddonSettingsBodies', 'legacy register without placement lands in ADDONS after the host is built');
-assert(byId('LegacyMaster') && !byId('LegacyRow_on') && byId('LegacyBody').applied.visibility === 'visible', 'legacy promotion: first on-toggle becomes the header master, the row is hidden');
+assert(byId('LegacyMaster') && !byId('LegacyRow_on') && byId('LegacyBody').applied.visibility === 'collapse', 'legacy promotion: first on-toggle becomes the header master, the row is hidden, and the empty body takes no room');
 assert(!(byId('LegacyBody').FindChildrenWithClassTraverse('HudppSectionTitle') || []).some(l => l._text === 'Legacy'), 'no section title that repeats the addon name');
 assert(!byId('LegacyReset'), 'on-off-only addon has no Reset');
 assert(!byId('LegacyAuthor'), 'no author on the legacy schema: no credit');
