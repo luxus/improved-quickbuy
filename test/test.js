@@ -128,6 +128,7 @@ assert(byId('IqbBody').applied.visibility === 'visible', 'with HUD++: selected b
 	assert(!byId('AddonSettingsClose').applied.width && !byId('AddonSettingsClose').applied.washColor, 'with HUD++: close X not inlined, CompLock CSS styles the boxed icon');
 	assert(byId('IqbReset').cls.has('HudppIconButton') && byId('IqbReset').applied.visibility === 'collapse', 'reset is a small icon, hidden until the header is hovered');
 	assert(byId('AddonSettingsFoot').parent === byId('AddonSettingsHost') && byId('AddonSettingsFoot').kids.some(k => k.cls.has('HudppStatus')) && byId('IqbReset').parent.id === 'IqbHead', 'one shared footer for status; per-addon reset stays on the header');
+	assert(parseInt(byId('AddonSettingsMain').applied.maxHeight, 10) >= 860, 'the list grows to most of the screen before it scrolls (640 px cut the fifth addon off): ' + byId('AddonSettingsMain').applied.maxHeight);
 	H.esc.cls.add('CanChangeHero');
 	click('AddonSettingsButton'); // close; liftPins refreshes
 	assert(byId('HudppPlay').applied.marginBottom === '382px', 'with CanChangeHero: PLAY lifted 350+32');
