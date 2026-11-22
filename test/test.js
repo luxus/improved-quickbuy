@@ -15,10 +15,16 @@ const start = (opts = {}) => { buildHud('vanilla', opts.queue); if (opts.session
 const hudClasses = () => { const out = {}; const w = (p, path) => p.kids.filter(k => !String(k.id).startsWith('Iqb') && k.id !== 'HudppPanel').forEach((k, i) => { const q = path + '/' + (k.id || i); out[q] = [...k.cls].filter(c => !c.startsWith('Iqb')).sort().join(' ') + '|' + JSON.stringify(k.applied) + '|' + k._text; w(k, q); }); w(H.root, ''); return out; };
 // our CSS, applied the way Panorama does: selectors (class/id compounds, descendant), later rules win
 const CSS = fs.readFileSync(process.env.IQB_CSS || __dirname + '/../src/improved_quickbuy.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const LAYOUT = process.env.IQB_LAYOUT || __dirname + '/../build/pak/panorama/layout/hud_quickbuy.xml';
+let layoutXml = '';
+try { layoutXml = fs.readFileSync(LAYOUT, 'utf8'); } catch (e) { layoutXml = ''; }
+const sheetInLayout = layoutXml.includes('s2r://panorama/styles/improved_quickbuy.vcss_c');
+if (!sheetInLayout) { console.log('FAIL ' + LAYOUT + ' does not include improved_quickbuy.vcss_c. The quickbuy stylesheet never reaches the panel, and text sits at the default top left.'); process.exit(1); }
 const RULES = CSS.split('}').map(chunk => { const i = chunk.indexOf('{'); if (i < 0) return null; const decl = {}; chunk.slice(i + 1).split(';').forEach(d => { const j = d.indexOf(':'); if (j > 0) decl[d.slice(0, j).trim()] = d.slice(j + 1).trim(); }); return { sels: chunk.slice(0, i).split(',').map(x => x.trim()).filter(Boolean), decl: decl }; }).filter(Boolean);
 const compound = (p, c) => (c.match(/[#.][\w-]+/g) || []).every(t => t[0] === '#' ? p.id === t.slice(1) : p.cls.has(t.slice(1)));
 const matches = (p, sel) => { const cs = sel.split(/\s+/); if (!compound(p, cs[cs.length - 1])) return false; let a = p.parent; for (let k = cs.length - 2; k >= 0; k--) { while (a && !compound(a, cs[k])) a = a.parent; if (!a) return false; a = a.parent; } return true; };
-const styleOf = p => { const st = {}; RULES.forEach(r => { if (r.sels.some(x => matches(p, x))) Object.assign(st, r.decl); }); Object.assign(st, p.applied || {}); return st; };
+const underQuickbuy = p => { for (let a = p; a; a = a.parent) if (a && (a.id === 'CitadelHudQuickbuy' || (a.cls && a.cls.has('HudQuickbuy')))) return true; return false; };
+const styleOf = p => { const st = {}; if (underQuickbuy(p)) RULES.forEach(r => { if (r.sels.some(x => matches(p, x))) Object.assign(st, r.decl); }); Object.assign(st, p.applied || {}); return st; };
 const visible = p => { for (let a = p; a; a = a.parent) if (styleOf(a).visibility === 'collapse') return false; return true; };
 const px = v => { const m = /^(\d+(?:\.\d+)?)px$/.exec(v || ''); return m ? parseFloat(m[1]) : 0; };
 // the HUD row: badge n above queue position n (1 = Valve's item), our entries for positions 2..5
@@ -279,7 +285,12 @@ assert(cells().every(c => px(styleOf(c.kids[0]).width) > 0 && px(styleOf(c.kids[
 assert([1, 2, 3].every(n => px(styleOf(badge(n)).marginLeft || styleOf(badge(n))['margin-left']) === 400 + (n - 1) * 78), 'badge n at 400 + (n-1)*78 px');
 assert([2, 3].every(n => styleOf(byId('IqbEntry' + n))['margin-left'] === styleOf(badge(n))['margin-left']), 'each badge right above its entry');
 assert(styleOf(byId('IqbEntry2'))['margin-bottom'] === '19px' && styleOf(byId('IqbEntry2')).width === '70px' && styleOf(byId('IqbEntry2')).height === '70px', 'entries: 70x70 at 19px from the bottom, the box of Valve\'s item (#HudMiniContents)');
-assert(/\.IqbHudOn #HudMini\s*\{\s*horizontal-align: left;/.test(CSS), '#HudMini left-aligned while the row is on, so the row cannot move it');
+assert(styleOf(byId('HudMini'))['horizontal-align'] === 'left', '#HudMini is left-aligned while the row is on. The rule has to match the panel, not merely sit in the CSS file.');
+{
+	const stray = S.mk('Label', H.esc, 'StrayBadge', 'IqbBadge IqbAt1');
+	const st = styleOf(stray);
+	assert(!st.width && !st['horizontal-align'] && !st['margin-left'], 'IqbBadge under the Esc menu gets nothing from the quickbuy stylesheet. That sheet is included only by hud_quickbuy.xml, so the text stays at the default top left: ' + JSON.stringify(st));
+}
 H.ctx.cls.delete('ShowMiniQuickbuy');
 assert(!stripShown() && cells().length === 0, 'no Valve quickbuy item (ShowMiniQuickbuy off): no row');
 
