@@ -9,8 +9,8 @@
 
 const VERSION = '1.0.4';
 const ok = p => !!(p && p.IsValid && p.IsValid());
-const cancel = h => { if (h) { try { $.CancelScheduled(h); } catch (e) { /* already ran */ } } return null; };
-const say = e => { try { $.Msg('Improved Quickbuy: ' + e); } catch (x) { /* no console */ } };
+const cancel = h => { if (h) { try { $.CancelScheduled(h); } catch (e) {} } return null; };
+const say = e => { try { $.Msg('Improved Quickbuy: ' + e); } catch (x) {} };
 const guard = (what, f) => { try { return f(); } catch (e) { say(what + ': ' + e); return undefined; } };
 const toInt = t => { const d = String(t === undefined || t === null ? '' : t).replace(/[^0-9]/g, ''); return d ? parseInt(d, 10) : 0; };
 const group = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
