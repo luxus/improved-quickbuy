@@ -2,6 +2,7 @@
 # Build, test, negative controls, provenance. ORIGINAL=<Enhanced Quickbuy pak> VANILLA=<Valve decompiled dir> HUDPP=<HUD++ decompiled dir>
 set -e
 cd "$(dirname "$0")/.."
+for f in tools/guard-*.js; do node "$f" || exit 1; done
 sh tools/build.sh
 node test/test.js
 sh examples/hello-addon/build.sh >/dev/null && node test/registry.js
