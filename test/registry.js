@@ -23,7 +23,6 @@ const helloValues = () => JSON.parse(H.ctx.attrs.hello_values || 'null');
 const openMenu = () => { H.menuButton.events.onactivate(); advance(0.3); };
 const errorsOk = what => assert(S.errors.length === 0, what + ': no errors: ' + S.errors.join(' | '));
 
-// ===== two addons, ADDONS host: one host, one list, own keys =====
 clear();
 buildHud('vanilla'); S.load(IQB); S.load(HELLO); advance(2);
 errorsOk('IQB + Hello');
@@ -51,7 +50,6 @@ click('HelloReset'); advance(1.5);
 assert(helloValues().enabled === true && helloValues().size === 20 && helloValues().corner === 'top-left', 'Hello Reset: Hello\'s defaults');
 { byId('HelloHead').events.onmouseover(); byId('HelloReset').events.onmouseover(); assert(byId('HelloReset').cls.has('HudppUndo') && S.tip && S.tip.text === 'Undo', 'Reset turns into Undo'); }
 
-// ===== load order: Hello before IQB, and Hello registering long after the host is up =====
 clear();
 buildHud('vanilla'); S.load(HELLO); S.load(IQB); advance(2);
 errorsOk('Hello first');
@@ -60,13 +58,11 @@ buildHud('vanilla'); S.load(IQB); advance(5); S.load(HELLO); advance(1);
 openAddons();
 assert(byId('HelloBlock') && byId('IqbBlock') && byId('AddonSettingsBodies').kids.indexOf(byId('IqbBlock')) < byId('AddonSettingsBodies').kids.indexOf(byId('HelloBlock')), 'late registration: its block is appended to the list');
 
-// ===== stored values: defaults, then the saved ones, bad ones fixed =====
 clear();
 storage.hello_addon_settings = JSON.stringify({ t: 1, enabled: false, size: 99, corner: 'nowhere', junk: 1 });
 buildHud('vanilla'); S.load(HELLO); advance(3);
 assert(helloValues().enabled === false && helloValues().size === 40 && helloValues().corner === 'top-left' && !('junk' in helloValues()), 'saved values: kept, clamped, unknown option and keys dropped: ' + JSON.stringify(helloValues()));
 
-// ===== a newer copy takes over =====
 clear();
 buildHud('vanilla'); S.load(IQB); advance(2); openMenu(); openMenu();
 S.load(newer(HELLO)); advance(2);
@@ -80,7 +76,6 @@ assert(JSON.parse(storage.improved_quickbuy_settings).hud === false, 'IQB\'s cha
 S.load(IQB); advance(2); // an older copy loading later only registers
 assert(hostBuild() === String(BUILD + 1) && count('AddonSettingsHost') === 1, 'an older copy later does not take over');
 
-// ===== window (no HUD++): one ADDONS button, both addons listed =====
 clear();
 buildHud('vanilla'); H.menuButton.parent.DeleteAsync(); S.load(IQB); S.load(HELLO); advance(2);
 errorsOk('window');
@@ -92,7 +87,6 @@ buildHud('vanilla'); H.menuButton.parent.DeleteAsync(); S.load(IQB); S.load(HELL
 click('AddonSettingsButton'); advance(0.1);
 assert(byId('IqbBody') && byId('HelloBody'), 'reopened after a HUD reload: both addons listed again');
 
-// ===== languages: each addon's table, the host's words =====
 $.Language = () => 'german';
 clear();
 buildHud('vanilla'); S.load(IQB); S.load(HELLO); advance(2); openAddons();
@@ -100,7 +94,6 @@ buildHud('vanilla'); S.load(IQB); S.load(HELLO); advance(2); openAddons();
 delete $.Language;
 
 
-// ===== placement complock: a tab in CompLock, Crosshair return hook =====
 clear();
 buildHud('vanilla'); S.load(IQB); S.load(LOCK); advance(2);
 errorsOk('IQB + LockFix');
@@ -133,7 +126,6 @@ buildHud('vanilla'); H.menuButton.parent.DeleteAsync(); S.load(LOCK); advance(2)
 openAddons();
 assert(byId('LockFixBlock') && byId('LockFixBlock').parent.id === 'AddonSettingsBodies' && byId('LockFixBody'), 'no HUD++: complock placement falls back to the ADDONS list');
 
-// ===== legacy schema (no placement) and late registration while ADDONS is already open =====
 const LEGACY = '(() => {\n' + LIB + '\nAddonSettings.register({ id: \'legacy_mod\', title: \'Legacy\', prefix: \'Legacy\', controls: [{ key: \'on\', type: \'toggle\', title: \'On\', default: true }] }, () => {});\n})();';
 clear();
 buildHud('vanilla'); S.load(IQB); advance(2);
