@@ -20,6 +20,8 @@ jobs:
         run: sh examples/hello-addon/build.sh && node test/registry.js
       - name: Negative controls (mutants)
         run: sh test/mutants.sh | tee mutants.txt && ! grep -q -e SURVIVED -e BROKEN mutants.txt
+      - name: Guards against repeated mistakes
+        run: for f in tools/guard-*.js; do echo "== $f =="; node "$f" || exit 1; done
       - name: Release artifacts match their digests
         run: |
           mkdir -p /tmp/rel
