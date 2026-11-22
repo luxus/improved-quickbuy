@@ -34,7 +34,7 @@ run menu-poll-forever "	return M.built ? 0 : 0.25;" "	return 0.25;"
 run menu-own-timer "	if (wait === 0.25 && H.rider && guard('rider', H.rider)) return;" ""
 run eager-tab-body "		tab.SetPanelEvent('onactivate', () => guard('tab', () => showTab(r, true)));" "		showTab(r, true); showTab(r, false); tab.SetPanelEvent('onactivate', () => guard('tab', () => showTab(r, true)));"
 run redundant-save "		if (now === r.stored) { status(r, word('Saved'), 'saved'); return; }" ""
-run eager-window-head "	const before = childWithClass(sub, 'SettingsRow');" "	openWindow(true); openWindow(false); const before = childWithClass(sub, 'SettingsRow');"
+run eager-window-head "	const b = placeButton(row);" "	openWindow(true); openWindow(false); const b = placeButton(row);"
 run fallback-with-hudpp "if (ok(esc.FindChildTraverse('HudppMenuButton'))) H.mode = 'hudpp';" "if (false) H.mode = 'hudpp';"
 run fallback-eager-body "say('build ' + BUILD + ' hosts; no HUD++ (CompLock) menu: settings in the Esc menu, ADDONS'); grow();" "say('build ' + BUILD + ' hosts; no HUD++ (CompLock) menu: settings in the Esc menu, ADDONS'); grow(); guard('w', () => { openWindow(true); openWindow(false); });"
 # fallback-not-inline retired in 1.2.4: switch colours are inline with and without HUD++, so the flag no longer
