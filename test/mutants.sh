@@ -37,7 +37,8 @@ run redundant-save "		if (now === r.stored) { status(r, word('Saved'), 'saved');
 run eager-window-head "	const before = childWithClass(sub, 'SettingsRow');" "	openWindow(true); openWindow(false); const before = childWithClass(sub, 'SettingsRow');"
 run fallback-with-hudpp "if (ok(esc.FindChildTraverse('HudppMenuButton'))) H.mode = 'hudpp';" "if (false) H.mode = 'hudpp';"
 run fallback-eager-body "say('build ' + BUILD + ' hosts; no HUD++ (CompLock) menu: settings in the Esc menu, ADDONS'); grow();" "say('build ' + BUILD + ' hosts; no HUD++ (CompLock) menu: settings in the Esc menu, ADDONS'); grow(); guard('w', () => { openWindow(true); openWindow(false); });"
-run fallback-not-inline "	const v = view(r, r.body, inline, null, r.schema.toggle);" "	const v = view(r, r.body, false, null, r.schema.toggle);"
+# fallback-not-inline retired in 1.2.4: switch colours are inline with and without HUD++, so the flag no longer
+# changes what IQB's ADDONS card shows (every IQB row needs only the master, which hides the body).
 # v9: languages, reset, foot, window clicks
 run loc-no-table "	if (t === null && table && typeof table === 'object') {" "	if (false) {"
 run loc-no-english-fallback "		else if (en && typeof en[token] === 'string') t = en[token];" ""
@@ -47,7 +48,7 @@ run loc-token-shown "	return fill(t === null ? token : t, args);" "	return fill(
 run click-falls-through "		const main = make('Button', h, 'AddonSettingsMain', 'AddonSettingsMain');" "		const main = make('Panel', h, 'AddonSettingsMain', 'AddonSettingsMain');"
 run reset-not-defaults "() => guard('reset', () => resetAddon(r))" "() => guard('reset', () => apply(r, {}))"
 run hudpp-foot-stays "		show(foot, false);" ""
-run off-hides-settings "			show(r.body, on);" "			show(r.body, true);"
+run off-hides-settings "			show(r.body, on && hasSettings); // an on/off-only addon is one row: no empty body under it" "			show(r.body, true);"
 run status-no-kind "	KINDS.forEach(k => flag(W.status, 'Hudpp_' + k, r.kind === k));" ""
 run eager-slots "if (!r && !slots[i]) continue;" ""
 # CSS mutants: the in-game failure of v2 (a row sized by its contents, squeezed to a sliver)
