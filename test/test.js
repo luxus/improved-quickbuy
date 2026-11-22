@@ -120,7 +120,8 @@ assert(byId('IqbBody').applied.visibility === 'visible', 'with HUD++: selected b
 	assert(btn && row && btn.parent === row && pack && sub.kids.indexOf(pack) + 1 === sub.kids.indexOf(row), 'with HUD++: ADDONS is its own row immediately below COMPLOCK');
 	assert(byId('changehero').applied.marginBottom === '312px' && byId('HudppPlay').applied.marginBottom === '312px', 'SWAP HERO and PLAY lifted 32px (280+32) so the extra row does not overlap them');
 	assert(byId('IqbBody').FindChildrenWithClassTraverse('HudppSectionTitle').length >= 1, 'ADDONS page has at least one section headline');
-	assert(byId('IqbAuthor')._text === 'by luxus' && !byId('IqbAuthor').cls.has('HudppCreditBy'), 'IQB author: tiny muted by luxus under the name');
+	assert(byId('IqbAuthor')._text === 'by luxus' && !byId('IqbAuthor').cls.has('HudppCreditBy'), 'IQB author comes from the per-addon schema under the name');
+	assert(byId('IqbAuthor').applied.fontSize === '13px' && byId('IqbAuthor').applied.color === '#ffefd799', 'author uses readable small text, not 10 px at one-third opacity');
 	assert(byId('IqbMaster') && byId('IqbSwitch') && byId('IqbReset') && byId('IqbBody').applied.visibility === 'visible', 'header keeps master, switch and reset; settings stay visible (test4 in-game: only the title survived)');
 	assert(!S.errors.some(e => /read only property 'id'|window: TypeError/.test(e)), 'open does not throw TypeError on panel.id');
 	{ let threw = false; try { byId('IqbTitle').id = 'Nope'; } catch (e) { threw = /read only property 'id'/.test(String(e)); } assert(threw && byId('IqbTitle').id === 'IqbTitle', 'stand-in matches the engine: panel.id is read-only after CreatePanel'); }
