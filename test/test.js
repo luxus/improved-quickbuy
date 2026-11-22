@@ -78,7 +78,7 @@ H.setQueue([['Extra Health', '800'], ['Extra Stamina', '800'], ['Monster Rounds'
 
 // ===== 3. CompLock menu stays HUD++'s; ADDONS is a separate host =====
 const before = hudClasses();
-assert(S.handlers.every(h => h.ev !== 'Activated') && S.handlers.filter(h => h.p).every(h => /^(Iqb|AddonSettings)/.test(String(h.p.id))), 'event handlers only on our own panels, none on HUD++\'s');
+assert(S.handlers.every(h => h.ev !== 'Activated') && S.handlers.filter(h => h.p).every(h => /^(Iqb|AddonSettings)/.test(String(h.p.id)) || (h.ev === 'PropertyTransitionEnd' && h.p.id === 'LeftStripe')), 'event handlers only on our own panels, none on HUD++\'s (only a read-only fade-end listener on Valve\'s #LeftStripe)');
 assert(byId('AddonSettingsButton') && byId('AddonSettingsButton').kids[0]._text === 'ADDONS', 'with HUD++: ADDONS button in the Esc menu');
 H.menuButton.events.onactivate();
 assert(H.menu && H.menu.cls.has('HudppOpen') && shown(H.menu) && bodies() === 'hud', 'menu button: HUD++ opens its menu at once, on its HUD tab');
@@ -130,6 +130,15 @@ assert(byId('IqbBody').applied.visibility === 'visible', 'with HUD++: selected b
 	assert(byId('IqbReset').cls.has('HudppIconButton') && byId('IqbReset').applied.visibility === 'collapse', 'reset is a small icon, hidden until the header is hovered');
 	assert(!byId('AddonSettingsFoot') && byId('AddonSettingsStatus').parent === byId('AddonSettingsHead') && byId('IqbReset').parent.id === 'IqbHead', 'status sits in the window head, no footer strip; per-addon reset stays on the addon header');
 	assert(parseInt(byId('AddonSettingsMain').applied.maxHeight, 10) >= 860, 'the list grows to most of the screen before it scrolls (640 px cut the fifth addon off): ' + byId('AddonSettingsMain').applied.maxHeight);
+	{
+		const play = byId('HudppPlay'), strip = byId('LeftStripe'), before = play.cls.has('AddonSettingsRestyle');
+		const fade = S.handlers.filter(h => h.ev === 'PropertyTransitionEnd' && h.p === strip);
+		assert(fade.length === 1, 'one PropertyTransitionEnd handler on #LeftStripe, no timer: ' + fade.length);
+		fade.forEach(h => h.f('LeftStripe', 'transform'));
+		assert(play.cls.has('AddonSettingsRestyle') === before, 'a transform transition end leaves PLAY alone');
+		fade.forEach(h => h.f('LeftStripe', 'opacity'));
+		assert(play.cls.has('AddonSettingsRestyle') !== before, 'Esc fade end flips a class on PLAY so HUD++\'s .CanChangeHero rule is re-matched (PLAY sat on SWAP HERO at lea 22.11. 11:25)');
+	}
 	H.esc.cls.add('CanChangeHero'); // no ADDONS click in between: nothing of ours runs when the class arrives
 	assert(byId('HudppPlay').applied.transform === 'translateY( -32px )' && !byId('HudppPlay').applied.marginBottom, 'CanChangeHero arriving after the lift: PLAY keeps the 32 px lift and its CSS margin still follows .CanChangeHero (PLAY sat on SWAP HERO at lea 22.11. 11:03)');
 	click('AddonSettingsButton'); // close
