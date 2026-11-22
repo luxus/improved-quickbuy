@@ -9,6 +9,7 @@ const assert = (c, m) => { if (c) passes++; else { fails++; console.log('FAIL', 
 
 const byId = id => { const w = p => { for (const k of p.kids) { if (k.id === id) return k; const r = w(k); if (r) return r; } return null; }; return w(H.root); };
 const click = id => byId(id).events.onactivate();
+const openAddons = () => { click('AddonSettingsButton'); advance(0.1); };
 const start = (opts = {}) => { buildHud('vanilla', opts.queue); if (opts.session !== undefined) H.root.attrs['AddonSettings:improved_quickbuy'] = opts.session; S.load(SRC); advance(opts.wait === undefined ? 2 : opts.wait); };
 // every HUD panel outside HUD++'s menu and outside our own panels: path -> classes|applied style|text
 const hudClasses = () => { const out = {}; const w = (p, path) => p.kids.filter(k => !String(k.id).startsWith('Iqb') && k.id !== 'HudppPanel').forEach((k, i) => { const q = path + '/' + (k.id || i); out[q] = [...k.cls].filter(c => !c.startsWith('Iqb')).sort().join(' ') + '|' + JSON.stringify(k.applied) + '|' + k._text; w(k, q); }); w(H.root, ''); return out; };
@@ -75,44 +76,32 @@ H.globalClass('gShopOpen', false); advance(0.3);
 assert(stripShown() && cellText() === '600:weapon/kinetic_dash', 'shop closed: strip back with the new queue: ' + cellText());
 H.setQueue([['Extra Health', '800'], ['Extra Stamina', '800'], ['Monster Rounds', '800'], ['Rapid Rounds', '1,600'], ['Mystic Burst', '1,600']]); advance(0.3);
 
-// ===== 3. CompLock menu: HUD++ opens it, our tab follows =====
+// ===== 3. CompLock menu stays HUD++'s; ADDONS is a separate host =====
 const before = hudClasses();
 assert(S.handlers.every(h => h.ev !== 'Activated') && S.handlers.filter(h => h.p).every(h => /^(Iqb|AddonSettings)/.test(String(h.p.id))), 'event handlers only on our own panels, none on HUD++\'s');
+assert(byId('AddonSettingsButton') && byId('AddonSettingsButton').kids[0]._text === 'ADDONS', 'with HUD++: ADDONS button in the Esc menu');
 H.menuButton.events.onactivate();
 assert(H.menu && H.menu.cls.has('HudppOpen') && shown(H.menu) && bodies() === 'hud', 'menu button: HUD++ opens its menu at once, on its HUD tab');
-assert(!byId('IqbTab'), 'our tab is not built before HUD++ opened');
+assert(!byId('IqbTab'), 'Quickbuy is not a CompLock tab');
 advance(0.3);
-assert(byId('IqbTab') && byId('IqbTab').parent.cls.has('HudppTabs') && bodies() === 'hud', 'Shop tab added within 0.25 s, menu still on HUD');
-click('IqbTab');
-assert(bodies() === 'shop' && H.foot.applied.visibility === 'collapse' && byId('IqbFoot').applied.visibility === 'visible' && byId('IqbTab').cls.has('HudppSelected') && !H.tabs.hud.cls.has('HudppSelected'), 'Shop tab: only our body and foot shown, HUD++ foot (status, reset) hidden, our tab selected');
+assert(!byId('IqbTab') && bodies() === 'hud' && H.menu.FindChildrenWithClassTraverse('HudppTab').length === 3, 'CompLock still has only HUD, Minimap, Crosshair');
 H.tabs.mm.events.onactivate(); advance(0.06);
-assert(bodies() === 'mm' && !byId('IqbTab').cls.has('HudppSelected') && H.foot.applied.visibility === 'visible', 'Shop -> Minimap: only the Minimap body shown');
-click('IqbTab'); advance(0.06);
-assert(bodies() === 'shop', 'Minimap -> Shop: HUD++ bodies stay hidden under the 3-tab CSS');
+assert(bodies() === 'mm', 'Minimap');
 H.tabs.xh.events.onactivate(); advance(0.06);
-assert(bodies() === 'xh' && !byId('IqbTab').cls.has('HudppSelected') && H.foot.applied.visibility === 'visible' && byId('IqbFoot').applied.visibility === 'collapse', 'Shop -> Crosshair: Crosshair shown within one 50 ms check');
-click('IqbTab'); H.tabs.hud.events.onactivate(); advance(0.06);
-assert(bodies() === 'hud', 'Shop -> HUD');
-// HUD++ showTab returns at once when t === tab. After Crosshair, Quickbuy must still be able to
-// open Crosshair again (Kai, 21.11: click from Quickbuy to Crosshair did nothing until HUD or Minimap).
-H.tabs.xh.events.onactivate(); advance(0.06);
-assert(bodies() === 'xh', 'on Crosshair before the return trip');
-click('IqbTab'); advance(0.06);
-assert(bodies() === 'shop' && byId('IqbTab').kids[0]._text === 'Quickbuy', 'Crosshair -> Quickbuy; tab title stays Quickbuy');
-H.tabs.xh.events.onactivate(); advance(0.06);
-assert(bodies() === 'xh' && !byId('IqbTab').cls.has('HudppSelected') && H.foot.applied.visibility === 'visible', 'Quickbuy after Crosshair -> Crosshair again: Crosshair shows');
+assert(bodies() === 'xh', 'Crosshair');
 H.tabs.hud.events.onactivate(); advance(0.06);
-click('IqbTab'); advance(0.06);
+assert(bodies() === 'hud', 'HUD again');
+H.tabs.xh.events.onactivate(); advance(0.06);
+assert(bodies() === 'xh', 'on Crosshair');
+H.tabs.xh.events.onactivate(); advance(0.06);
+assert(bodies() === 'xh', 'Crosshair clicked again still shows Crosshair');
 H.tabs.hud.events.onactivate(); advance(0.06);
-assert(bodies() === 'hud', 'Quickbuy after HUD -> HUD again');
-assert(!S.handlers.some(h => h.ev === 'Activated' && h.p && [H.tabs.hud, H.tabs.mm, H.tabs.xh].includes(h.p)), 'no Activated hook left on HUD++ tabs after leaving ours');
-for (let i = 0; i < 5; i++) { click('IqbTab'); advance(0.1); H.tabs[i % 2 ? 'hud' : 'xh'].events.onactivate(); advance(0.1); }
-assert(bodies() === 'xh' || bodies() === 'hud', 'repeated switching stays consistent: ' + bodies());
-click('IqbTab'); advance(0.1);
+assert(bodies() === 'hud', 'HUD after Crosshair');
+assert(!S.handlers.some(h => h.ev === 'Activated' && h.p && [H.tabs.hud, H.tabs.mm, H.tabs.xh].includes(h.p)), 'no Activated hook on HUD++ tabs when no complock-placement addon is shown');
 H.menuButton.events.onactivate(); advance(0.1);
 assert(!H.menu.cls.has('HudppOpen'), 'button again: HUD++ closes the menu');
 H.menuButton.events.onactivate(); advance(0.3);
-assert(H.menu.cls.has('HudppOpen') && bodies() === H.tab && H.menu.FindChildrenWithClassTraverse('HudppTab').length === 4, 'reopened (HUD++ refresh puts its tab back), no second Shop tab');
+assert(H.menu.cls.has('HudppOpen') && bodies() === H.tab && H.menu.FindChildrenWithClassTraverse('HudppTab').length === 3, 'reopened, still 3 CompLock tabs');
 H.menuButton.events.onactivate(); advance(0.1);
 const after = hudClasses();
 H.menuButton.events.onactivate(); advance(0.3);
@@ -120,24 +109,64 @@ const changed = Object.keys(before).filter(k => before[k] !== after[k]);
 assert(changed.length === 0, 'outside the menu nothing of the HUD changed: ' + changed.slice(0, 3).join(', '));
 
 // ===== 4. options =====
-click('IqbTab');
+openAddons();
+assert(byId('IqbBlock') && byId('IqbTitle')._text === 'Quickbuy' && byId('IqbBody') && !byId('AddonSettingsTabs') && !byId('IqbTab'), 'ADDONS lists Quickbuy in one window, no tab bar');
+assert(byId('AddonSettingsMain').applied.width === '100%' && byId('AddonSettingsMain').applied.flowChildren === 'down', 'with HUD++: ADDONS chrome still has width and flow (not skipped because CompLock CSS is present)');
+assert(byId('IqbBody').applied.visibility === 'visible', 'with HUD++: selected body is visibility visible (HUD++ .HudppBody defaults to collapse)');
+{
+	const btn = byId('AddonSettingsButton'), row = byId('AddonSettingsRow');
+	const sub = row && row.parent;
+	const pack = sub && sub.kids.find(k => k.cls.has('HudppMenuRow'));
+	assert(btn && row && btn.parent === row && pack && sub.kids.indexOf(pack) + 1 === sub.kids.indexOf(row), 'with HUD++: ADDONS is its own row immediately below COMPLOCK');
+	assert(byId('changehero').applied.marginBottom === '312px' && byId('HudppPlay').applied.marginBottom === '312px', 'SWAP HERO and PLAY lifted 32px (280+32) so the extra row does not overlap them');
+	assert(byId('IqbBody').FindChildrenWithClassTraverse('HudppSectionTitle').length >= 1, 'ADDONS page has at least one section headline');
+	assert(byId('IqbAuthor')._text === 'by luxus' && !byId('IqbAuthor').cls.has('HudppCreditBy'), 'IQB author comes from the per-addon schema under the name');
+	assert(byId('IqbAuthor').applied.fontSize === '13px' && byId('IqbAuthor').applied.color === '#ffefd799', 'author uses readable small text, not 10 px at one-third opacity');
+	assert(byId('IqbMaster') && byId('IqbSwitch') && byId('IqbReset') && byId('IqbBody').applied.visibility === 'visible', 'header keeps master, switch and reset; settings stay visible (test4 in-game: only the title survived)');
+	assert(!S.errors.some(e => /read only property 'id'|window: TypeError/.test(e)), 'open does not throw TypeError on panel.id');
+	{ let threw = false; try { byId('IqbTitle').id = 'Nope'; } catch (e) { threw = /read only property 'id'/.test(String(e)); } assert(threw && byId('IqbTitle').id === 'IqbTitle', 'stand-in matches the engine: panel.id is read-only after CreatePanel'); }
+	assert(S.info.some(m => /Esc menu: found looks=/.test(m)), 'Esc lookup logs the result and the look count');
+	assert(!byId('AddonSettingsClose').applied.width && !byId('AddonSettingsClose').applied.washColor, 'with HUD++: close X not inlined, CompLock CSS styles the boxed icon');
+	assert(byId('IqbReset').cls.has('HudppIconButton') && byId('IqbReset').applied.visibility === 'collapse', 'reset is a small icon, hidden until the header is hovered');
+	assert(!byId('AddonSettingsFoot') && byId('AddonSettingsStatus').parent === byId('AddonSettingsHead') && byId('IqbReset').parent.id === 'IqbHead', 'status sits in the window head, no footer strip; per-addon reset stays on the addon header');
+	assert(parseInt(byId('AddonSettingsMain').applied.maxHeight, 10) >= 860, 'the list grows to most of the screen before it scrolls (640 px cut the fifth addon off): ' + byId('AddonSettingsMain').applied.maxHeight);
+	H.esc.cls.add('CanChangeHero');
+	click('AddonSettingsButton'); // close; liftPins refreshes
+	assert(byId('HudppPlay').applied.marginBottom === '382px', 'with CanChangeHero: PLAY lifted 350+32');
+	click('AddonSettingsButton'); // reopen for the rest of this section
+	click('IqbMaster'); advance(0.1);
+	assert(byId('IqbBody').applied.visibility === 'collapse', 'master off hides this addon\'s settings');
+	click('IqbMaster'); advance(0.1);
+	assert(byId('IqbBody').applied.visibility === 'visible', 'master on shows settings again');
+}
 const row = k => byId('IqbRow_' + k);
-const swOn = row('on').kids.find(k => k.cls.has('HudppSwitch'));
-const titleOn = row('on').kids.find(k => k.cls.has('HudppRowTitle'));
-assert(!row('on').kids.some(k => k.cls.has('HudppRowText') || k.cls.has('HudppRowDesc')) && row('on').applied.height === undefined, 'toggle row has no description line under the title and does not override HUD++\'s 34 px height: ' + JSON.stringify(row('on').applied));
-assert(titleOn && swOn && titleOn.parent === row('on') && swOn.parent === row('on'), 'title and switch are direct children of the toggle row');
-assert(!row('on').kids.some(k => k.cls.has('HudppChildMark')) && row('hud').kids.some(k => k.cls.has('HudppChildMark')) && row('runningTotals').kids.some(k => k.cls.has('HudppChildMark')), 'toggle rows that need Enable get the HUD++ child indent; Enable itself does not');
+const swHud = row('hud').kids.find(k => k.cls.has('HudppSwitch'));
+const titleHud = row('hud').kids.find(k => k.cls.has('HudppRowTitle'));
+assert(!row('hud').kids.some(k => k.cls.has('HudppRowText') || k.cls.has('HudppRowDesc')) && row('hud').applied.height === undefined, 'toggle row has no description line under the title and does not override HUD++\'s 34 px height: ' + JSON.stringify(row('hud').applied));
+assert(titleHud && swHud && titleHud.parent === row('hud') && swHud.parent === row('hud'), 'title and switch are direct children of the toggle row');
+assert(row('hud').applied.paddingLeft === '28px' && row('runningTotals').applied.paddingLeft === '28px' && !row('hud').kids.some(k => k.cls.has('HudppChildMark')), 'child rows indent with padding, no corner mark');
 assert(!row('count').kids.some(k => k.cls.has('HudppRowDesc')), 'slider row has no description line (HUD++ sliders have no desc tooltip)');
-assert(typeof row('on').events.onmouseover === 'function' && typeof row('on').events.onmouseout === 'function', 'Enable row hooks hover for Valve\'s text tooltip');
-row('on').events.onmouseover();
-assert(S.tip && S.tip.p === row('on') && S.tip.text === 'Souls still missing for your quickbuy items, in the HUD and in the shop.', 'hovering Enable shows its description as Valve\'s text tooltip: ' + (S.tip && S.tip.text));
-row('on').events.onmouseout();
+assert(typeof byId('IqbMaster').events.onmouseover === 'function' && typeof byId('IqbMaster').events.onmouseout === 'function', 'master switch hooks hover for Valve\'s text tooltip');
+{
+	const master = byId('IqbMaster'), row = byId('IqbRow_hud');
+	const track = row.kids.find(p => p.cls.has('HudppSwitch'));
+	const before = [master.applied.backgroundColor, byId('IqbSwitch').applied.backgroundColor, row.applied.backgroundColor, track.applied.backgroundColor];
+	master.events.onmouseover(); row.events.onmouseover();
+	assert(JSON.stringify(before) === JSON.stringify([master.applied.backgroundColor, byId('IqbSwitch').applied.backgroundColor, row.applied.backgroundColor, track.applied.backgroundColor]), 'toggle hover keeps row and track colours unchanged');
+	assert(before[0] === '#ffefd700' && before[1] === '#5fe69e' && before[2] === '#ffefd70a' && before[3] === '#5fe69e', 'colours pinned inline beat HUD++ hover selectors on both kinds of toggle');
+	row.events.onmouseout(); master.events.onmouseout();
+	assert(/^VALVEPulp,/.test(byId('AddonSettingsHead').FindChildrenWithClassTraverse('AddonSettingsTitle')[0].applied.fontFamily || ''), 'ADDONS headline uses the game block font by its name (the @define alias does not resolve inline)');
+	assert(byId('IqbTitle').applied.fontWeight === 'bold', 'addon headings are not thin');
+}
+byId('IqbMaster').events.onmouseover();
+assert(S.tip && S.tip.p === byId('IqbHead') && S.tip.text === 'Souls still missing for your quickbuy items, in the HUD and in the shop.', 'hovering the master shows Enable\'s description as Valve\'s text tooltip, anchored on the addon header, beside the window: ' + (S.tip && S.tip.text));
+byId('IqbMaster').events.onmouseout();
 assert(!S.tip, 'leaving the row hides the tooltip');
 row('hud').events.onmouseover();
 assert(S.tip && /badge/.test(S.tip.text), 'Show Missing Souls tooltip: ' + (S.tip && S.tip.text));
 row('hud').events.onmouseout();
 assert(!S.tip, 'leaving Show Missing Souls hides the tooltip');
-assert(row('on').cls.has('HudppOn') && row('hud').cls.has('HudppOn') && byId('IqbCountBar') && byId('IqbCountBar').cls.has('HudppSlider') && byId2(byId('IqbCountBar'), 'SliderThumb').kids.some(k => k.cls.has('HudppThumbDot')), 'rows built with HUD++ markup, slider with thumb dot');
+assert(byId('IqbMaster').cls.has('HudppOn') && row('hud').cls.has('HudppOn') && byId('IqbCountBar') && byId('IqbCountBar').cls.has('HudppSlider') && byId2(byId('IqbCountBar'), 'SliderThumb').kids.some(k => k.cls.has('HudppThumbDot')), 'rows built with HUD++ markup, slider with thumb dot');
 assert(Math.abs(byId('IqbCountBar').value - 0.5) < 1e-6 && byId2(row('count'), '').parent, 'slider sits at 3 of 1..5');
 click('IqbCountUp'); advance(0.3);
 assert(cells().length === 3, 'count 4: three upcoming cells');
@@ -159,7 +188,7 @@ assert(tags() !== '- - - - -' && total() !== '', 'both back on');
 H.globalClass('gShopOpen', false); advance(0.3);
 
 // ===== 5. disabled: nothing runs =====
-click('IqbRow_on'); advance(0.3);
+click('IqbMaster'); advance(0.3);
 assert(!stripShown() && row('hud').cls.has('HudppRowOff'), 'master off: strip hidden, rows dimmed');
 H.globalClass('gShopOpen', true); advance(0.3);
 assert(tags() === '- - - - -' && total() === '', 'master off: nothing in the shop either');
@@ -171,8 +200,8 @@ assert(ticks === 0 && C.textWrites + C.classWrites + C.images + C.styleWrites + 
 assert(C.sched <= 49, 'disabled: only the 4 Hz menu check runs (' + C.sched + ' schedules in 12 s)');
 
 // ===== 6. persistence =====
-H.menuButton.events.onactivate(); advance(0.3); click('IqbTab');
-click('IqbRow_on'); advance(1.5); // on again, saved after 0.6 s
+openAddons();
+click('IqbMaster'); advance(1.5); // on again, saved after 0.6 s
 const saved = JSON.parse(storage.improved_quickbuy_settings || 'null');
 assert(saved && saved.on === true && saved.count === 3 && saved.t > 0, 'saved to the store page under improved_quickbuy_settings: ' + storage.improved_quickbuy_settings);
 assert(!('hudpp_settings' in storage), 'CompLock\'s own key never touched');
@@ -189,7 +218,7 @@ H.globalClass('gShopOpen', true); advance(0.3);
 assert(total() === '' && tags() !== '- - - - -', 'after restart: Queue Total still off');
 assert(!byId('AddonSettingsVault'), 'store page closed right after the startup load');
 H.globalClass('gShopOpen', false);
-H.menuButton.events.onactivate(); advance(0.3); click('IqbTab');
+openAddons();
 assert(byId('IqbCountBar').value === 0.25 && !row('queueTotal').cls.has('HudppOn'), 'menu shows the loaded settings');
 // session copy: a HUD reload in the same game does not reload from the page
 const session = H.root.attrs['AddonSettings:improved_quickbuy'];
@@ -199,8 +228,8 @@ assert(!byId('AddonSettingsVault') && cells().length === 1, 'HUD reload: setting
 for (const k in storage) delete storage[k];
 net.online = false; start({ wait: 9 });
 assert(stripShown() && cells().length === 2, 'offline: defaults, mod works');
-H.menuButton.events.onactivate(); advance(0.3); click('IqbTab');
-assert(/not loaded/.test(byId('IqbFoot') ? byId('IqbFoot').FindChildrenWithClassTraverse('AddonSettingsStatus')[0]._text : ''), 'offline: status says saved settings not loaded');
+openAddons();
+assert(/Not loaded/.test(byId('AddonSettingsStatus') ? byId('AddonSettingsStatus')._text : ''), 'offline: status says Not loaded: ' + (byId('AddonSettingsStatus') ? byId('AddonSettingsStatus')._text : ''));
 net.online = true;
 
 // ===== 7. robustness =====
@@ -208,9 +237,11 @@ start(); H.ctx.kids.find(k => k.id === 'QuickBuyQueueContainer').DeleteAsync(); 
 assert(S.errors.length === 0, 'quickbuy queue missing: no errors');
 buildHud('vanilla'); H.esc.DeleteAsync(); S.load(SRC); advance(3);
 assert(S.errors.length === 0 && stripShown(), 'no escape menu (no HUD++): works, no errors');
-// HUD++ without tab bar
+// HUD++ without tab bar: placement addons still uses ADDONS, not CompLock's HUD body
 start(); { const real = H.openMenu; H.openMenu = () => { real(); const bar = H.menu.kids.find(k => k.cls.has('HudppTabs')); if (bar) { bar.DeleteAsync(); H.refresh = () => {}; } }; H.openMenu(); H.openMenu = real; } advance(0.3);
-assert(byId('IqbBody') && byId('IqbBody').parent === H.hudBody, 'HUD++ without tab bar: our rows at the end of its HUD tab');
+assert(!byId('IqbBody') || byId('IqbBody').parent !== H.hudBody, 'HUD++ without tab bar: Quickbuy is not stuffed into the HUD tab');
+openAddons();
+assert(byId('IqbBody') && byId('IqbBlock'), 'HUD++ without tab bar: Quickbuy still opens in ADDONS');
 // item not in the table, and a ModIconImage with a src attribute
 start(); H.items[1].FindChildTraverse('ModName')._text = 'Unknown Thing'; H.items[2].FindChildTraverse('ModIconImage').attrs.src = 's2r://x/y_psd.vtex'; H.items[2].FindChildTraverse('ModName')._text = 'Other'; advance(0.3);
 assert(cellText() === '600: 1,400:s2r://x/y', 'unknown item: no icon; src attribute preferred: ' + cellText());
@@ -228,9 +259,9 @@ buildHud('vanilla'); H.stats.cls.add('gShopOpen'); S.load(SRC); advance(2);
 assert(!stripShown() && total() !== '', 'HUD loads with the shop open: shop mode from the class');
 start();
 // console: one load line and one first-update line, so a game log shows whether the script ran
-assert(S.info.length === 4 && /1\.0\.3 loaded/.test(S.info[0]) && S.info.some(m => /Addon Settings: build \d+ hosts; settings as tabs in CompLock/.test(m)) && S.info.some(m => /queue 3, souls found/.test(m)), 'console lines once: ' + S.info.join(' | '));
+assert(S.info.length === 5 && /1\.0\.4 loaded/.test(S.info[0]) && S.info.some(m => /Esc menu: found looks=/.test(m)) && S.info.some(m => /Addon Settings: build \d+ hosts; ADDONS in the Esc menu/.test(m)) && S.info.some(m => /queue 3, souls found/.test(m)), 'console lines once: ' + S.info.join(' | '));
 advance(5);
-assert(S.info.length === 4, 'no further console lines while running');
+assert(S.info.length === 5, 'no further console lines while running');
 // a component queued before its upgrade is not paid twice (Extra Health -> Colossus, from abilities.vdata)
 start({ queue: [['Extra Health', '800'], ['Colossus', '6,400'], ['Extra Stamina', '800']] });
 assert(cellText() === '5,400:vitality/colossus 6,200:vitality/extra_stamina', 'queued component taken off its upgrade: ' + cellText());
@@ -254,7 +285,7 @@ assert(!stripShown() && cells().length === 0, 'no Valve quickbuy item (ShowMiniQ
 
 // ===== 10. the badge number: souls still missing up to and including that item =====
 // default count 3; set 5 for these
-const five = () => { H.menuButton.events.onactivate(); advance(0.3); click('IqbTab'); byId('IqbCountBar').value = 1; advance(0.3); H.menuButton.events.onactivate(); advance(0.3); };
+const five = () => { openAddons(); byId('IqbCountBar').value = 1; advance(0.3); click('AddonSettingsButton'); advance(0.1); };
 // plain queue
 start({ queue: [['Extra Health', '800'], ['Extra Stamina', '800'], ['Monster Rounds', '800'], ['Rapid Rounds', '1,600'], ['Mystic Burst', '1,600']] }); five();
 H.souls._text = '1,000'; advance(0.3);
@@ -282,12 +313,12 @@ start({ queue: [['Extra Health', '800'], ['Extra Stamina', '800']] }); S.entry(H
 assert(badges() === '400 1,200', 'selling an 800 item adds 400: ' + badges());
 
 // ===== 11. v4: labels, range 1..5, saved values =====
-start(); H.menuButton.events.onactivate(); advance(0.3); click("IqbTab"); advance(0.1);
+start(); openAddons();
 const labelOf = id => { const r = byId(id); const t = r && r.FindChildrenWithClassTraverse('HudppRowTitle')[0]; return t ? t._text : ''; };
 const sectionTitles = () => byId("IqbBody").FindChildrenWithClassTraverse("HudppSectionTitle").map(l => l._text).join(",");
-assert(byId('IqbTab').kids[0]._text === 'Quickbuy', 'CompLock tab is called Quickbuy: ' + byId('IqbTab').kids[0]._text);
-assert(labelOf('IqbRow_on') === 'Enable' && labelOf('IqbRow_hud') === 'Show Missing Souls' && labelOf('IqbRow_count') === 'Items Shown', 'row titles Enable / Show Missing Souls / Items Shown: ' + ['on', 'hud', 'count'].map(k => labelOf('IqbRow_' + k)).join(' / '));
-assert(/Improved Quickbuy/.test(sectionTitles()) && /HUD/.test(sectionTitles()) && /Shop/.test(sectionTitles()) && !/In Play/.test(sectionTitles()), 'sections Improved Quickbuy, HUD, Shop: ' + sectionTitles());
+assert(byId('IqbTitle')._text === 'Quickbuy', 'ADDONS lists Quickbuy: ' + (byId('IqbTitle') && byId('IqbTitle')._text));
+assert(byId('IqbTitle')._text === 'Quickbuy' && labelOf('IqbRow_hud') === 'Show Missing Souls' && labelOf('IqbRow_count') === 'Items Shown', 'header Quickbuy, row titles Show Missing Souls / Items Shown');
+assert(/HUD/.test(sectionTitles()) && /Shop/.test(sectionTitles()) && !/In Play/.test(sectionTitles()), 'sections HUD, Shop (Enable lives on the header): ' + sectionTitles());
 H.menuButton.events.onactivate(); advance(0.3);
 const savedAs = obj => { for (const k in storage) delete storage[k]; storage.improved_quickbuy_settings = JSON.stringify(Object.assign({ t: 1000 + Math.random() }, obj)); start({ wait: 3 }); return { count: badges().split(' ').filter(Boolean).length, entries: cells().length }; };
 let m = savedAs({ v: 2, on: true, hud: true, count: 2 });
@@ -322,7 +353,7 @@ buildHud('vanilla'); spySouls(); S.load(SRC); advance(3);
 assert(badges() === '' && cells().length === 0 && !byId('IqbBadge1'), 'both off, 1 item: vanilla, nothing of ours built');
 S.resetCounts(); soulReads = 0; H.souls._text = '77'; advance(10);
 assert(S.jobs.filter(j => j.f.name === 'tick').length === 0 && C.finds + C.nodes + C.classWrites + C.textWrites + C.images + C.styleWrites === 0 && soulReads === 0 && C.sched <= 41, 'both off, 1 item: no update timer and zero work in 10 s (only the 4 Hz CompLock menu check runs, as with the mod off): ' + JSON.stringify(C));
-H.menuButton.events.onactivate(); advance(0.3); click('IqbTab');
+openAddons();
 assert(!row('count').cls.has('HudppRowOff'), 'Items Shown slider stays usable with the badges off');
 click('IqbCountUp'); advance(0.3);
 assert(cells().length === 1 && badges() === '', 'Items Shown raised with the badges off: one extra entry appears, still no badges');
@@ -348,7 +379,8 @@ H.globalClass('gShopOpen', false);
 	const writes = r => (r.classWrites || 0) + (r.textWrites || 0) + (r.styleWrites || 0) + (r.created || 0);
 	start();
 	let r = per(10);
-	assert(r.sched <= 8.1 && r.reads <= 35 && writes(r) === 0, 'play, nothing changes (menu not built yet): reads ' + r.reads + '/s, sched ' + r.sched + '/s, no writes');
+	// 37: the menu look reads #EscapeMenu's .CanChangeHero once per look (4/s) for PLAY's pin
+	assert(r.sched <= 8.1 && r.reads <= 37 && writes(r) === 0, 'play, nothing changes (menu not built yet): reads ' + r.reads + '/s, sched ' + r.sched + '/s, no writes');
 	assert(!byId('IqbEntry4') && !byId('IqbEntry5') && !byId('IqbBadge4') && !byId('IqbBadge5'), 'HUD panels only up to Items Shown (3)');
 	H.menuButton.events.onactivate(); advance(0.5); H.menuButton.events.onactivate(); advance(1);
 	r = per(10);
@@ -364,7 +396,7 @@ H.globalClass('gShopOpen', false);
 	H.souls = fresh; advance(6);
 	assert(S.errors.length === 0 && next() === '' && byId('IqbBadge1').cls.has('IqbReady'), 'souls label replaced: read again from the new one');
 	// all features off: no timer left
-	H.menuButton.events.onactivate(); advance(0.3); click('IqbTab');
+	openAddons();
 	['IqbRow_hud', 'IqbRow_runningTotals', 'IqbRow_queueTotal'].forEach(click); [1, 2, 3, 4].forEach(() => click('IqbCountDown'));
 	advance(0.3); H.menuButton.events.onactivate(); advance(1);
 	r = per(10);
@@ -386,15 +418,22 @@ assert(S.errors.length === 0 && stripShown() && cells().length === 2, 'no HUD++:
 	assert(C.sched / 60 <= 4.01 && S.errors.length === 0, 'no HUD++: no menu check left, only the HUD tick: sched ' + C.sched / 60 + '/s');
 	button.events.onactivate(); advance(0.1);
 	const body = byId('IqbBody');
-	assert(host.applied.visibility === 'visible' && body && body.applied.visibility === 'visible' && byId('AddonSettingsNav_improved_quickbuy').cls.has('AddonSettingsSelected'), 'first open: window shown with Quickbuy selected in the sidebar');
+	assert(host.applied.visibility === 'visible' && body && body.applied.visibility === 'visible' && byId('IqbBlock'), 'first open: window shown with Quickbuy listed');
 	assert(host.kids[0].cls.has('AddonSettingsHead') && byId('AddonSettingsClose'), 'first open: head built, first in the window');
-	assert(byId('IqbRow_on') && byId('IqbCountBar') && byId('IqbRow_hud').kids.some(k => k.cls.has('HudppSwitch')), 'same rows and slider as in CompLock');
+	assert(byId('IqbMaster') && !byId('IqbRow_on') && byId('IqbCountBar') && byId('IqbRow_hud').kids.some(k => k.cls.has('HudppSwitch')), 'master switch on the header, remaining rows and slider below');
 	const sw = byId('IqbRow_hud').kids.find(k => k.cls.has('HudppSwitch'));
 	assert(sw.applied.backgroundColor === '#5fe69e', 'switch drawn on (inline): ' + sw.applied.backgroundColor);
 	click('IqbRow_hud'); advance(1);
 	assert(!byId('IqbBadge1') || !visible(byId('IqbBadge1')), 'switching Show Missing Souls off in our window hides the badges');
 	assert(sw.applied.backgroundColor !== '#5fe69e', 'switch drawn off');
 	assert(JSON.parse(storage.improved_quickbuy_settings || '{}').hud === false, 'saved to the store page: ' + JSON.stringify(storage).slice(0, 200));
+	{ const st = byId('AddonSettingsStatus'); assert(st._text === 'Saved' && st.cls.has('Hudpp_saved') && st.applied.color === '#5fe69e', 'no HUD++: Saved is teal: ' + st.applied.color); }
+	assert(typeof byId('IqbReset').events.onmouseover === 'function', 'no HUD++: reset has a hover handler');
+	byId('IqbReset').events.onmouseover();
+	assert(byId('IqbReset').applied.backgroundColor === '#ffefd714', 'no HUD++: reset hover fills');
+	byId('IqbReset').events.onmouseout();
+	assert(byId('IqbAuthor')._text === 'by luxus', 'no HUD++: tiny author still shown');
+	assert(!byId('AddonSettingsFoot') && byId('AddonSettingsStatus').parent === byId('AddonSettingsHead'), 'no HUD++: status in the window head, no footer');
 	click('IqbCountUp'); advance(1);
 	assert(cells().length === 3, 'Items Shown 4 from our window: ' + cells().length);
 	click('AddonSettingsClose'); advance(0.1);
@@ -409,29 +448,29 @@ assert(S.errors.length === 0 && stripShown() && cells().length === 2, 'no HUD++:
 buildHud('vanilla'); H.menuButton.parent.DeleteAsync(); S.load(SRC); advance(3);
 assert(stripShown() === false && cells().length === 3, 'no HUD++: saved settings loaded again (no badges, 4 items): ' + cells().length);
 assert(S.info.filter(m => /no HUD\+\+/.test(m)).length === 1, 'no HUD++: said once in the console');
-// HUD++ present: our tab in CompLock, no ADDONS button or window
+// HUD++ present: ADDONS button in the Esc menu; window stays closed until opened
 for (const k in storage) delete storage[k];
 start(); H.menuButton.events.onactivate(); advance(0.5); H.menuButton.events.onactivate(); advance(70);
-assert(!byId('AddonSettingsButton') && !byId('AddonSettingsHead') && byId('AddonSettingsHost').applied.visibility === 'collapse', 'HUD++ present: no ADDONS button, no window built');
+assert(byId('AddonSettingsButton') && !byId('AddonSettingsHead') && byId('AddonSettingsHost').applied.visibility === 'collapse', 'HUD++ present: ADDONS button there, window not built until opened');
 // no escape menu at all
 buildHud('vanilla'); H.esc.DeleteAsync(); S.load(SRC); advance(80);
 { S.resetCounts(); advance(10); assert(C.sched / 10 <= 4.01 && S.errors.length === 0, 'no escape menu: the menu check stops too: sched ' + C.sched / 10 + '/s'); }
 // with HUD++ the menu check keeps looking at 4 Hz until it is opened (latency of our tab)
 start(); advance(70); { S.resetCounts(); advance(10); assert(C.sched / 10 <= 4.01, 'with HUD++, never opened: the menu check rides on the HUD tick: sched ' + C.sched / 10); }
-H.menuButton.events.onactivate(); advance(0.3); assert(byId('IqbTab'), 'with HUD++: our tab appears within one HUD tick of the menu opening');
+openAddons(); assert(byId('IqbBlock') && byId('IqbTitle') && !byId('AddonSettingsTabs'), 'with HUD++: ADDONS lists Quickbuy, no tab bar');
 // HUD tick stopped (all features off, settings from the store): the menu check keeps its own 4 Hz timer
 for (const k in storage) delete storage[k];
 storage.improved_quickbuy_settings = JSON.stringify({ v: 3, t: 5000, on: true, hud: false, count: 1, runningTotals: false, queueTotal: false });
 start({ wait: 3 }); advance(5);
 { S.resetCounts(); advance(10); assert(C.sched / 10 >= 3.9 && C.sched / 10 <= 4.01, 'HUD tick stopped: menu check on its own timer, 4 Hz: ' + C.sched / 10); }
-H.menuButton.events.onactivate(); advance(0.3); assert(byId('IqbTab'), 'HUD tick stopped: our tab still appears');
-H.menuButton.events.onactivate(); advance(0.5); { S.resetCounts(); advance(10); assert(C.sched === 0, 'all off and tab built: no timer at all: ' + C.sched); }
+openAddons(); assert(byId('IqbBlock'), 'HUD tick stopped: ADDONS still opens Quickbuy');
+H.menuButton.events.onactivate(); advance(0.5); { S.resetCounts(); advance(10); assert(C.sched === 0, 'all off and CompLock seen: no timer at all: ' + C.sched); }
 
 // ===== 16. v7: settings cost only when used =====
 for (const k in storage) delete storage[k];
-start(); H.menuButton.events.onactivate(); advance(0.3);
-assert(byId('IqbTab') && !byId('IqbBody'), 'HUD++ menu opened: only our tab button, no body until it is clicked');
-{ const before = C.created; click('IqbTab'); advance(0.1); assert(byId('IqbBody') && C.created > before, 'tab clicked: body built'); }
+start();
+assert(!byId('IqbBody') && byId('AddonSettingsButton'), 'ADDONS closed: no body until the first open');
+{ const before = C.created; openAddons(); assert(byId('IqbBlock') && byId('IqbBody') && C.created > before, 'ADDONS opened: Quickbuy block and body built'); }
 { const p = byId('IqbRow_hud'); click('IqbRow_hud'); click('IqbRow_hud'); net.writes.length = 0; advance(1); assert(net.writes.length === 0, 'switched off and on again within the save delay: no store write'); }
 { net.writes.length = 0; click('IqbRow_hud'); advance(0.2); click('IqbRow_runningTotals'); advance(1); assert(net.writes.length === 1, 'two changes in a burst: one store write: ' + net.writes.length); }
 advance(5); assert(!byId('AddonSettingsVault'), 'store page closed again after saving (no idle browser panel)');
@@ -440,15 +479,17 @@ S.resetCounts(); advance(10); assert(C.sched / 10 <= 4.01 && C.created === 0, 'm
 
 // ===== 17. v9: languages, reset tab, saved status, the window's clicks and last tab =====
 const words = p => { const out = []; const w = q => q.kids.forEach(k => { if (k.type === 'Label') out.push(k._text); w(k); }); if (p) w(p); return out; };
-const openQuickbuy = () => { H.menuButton.events.onactivate(); advance(0.3); click('IqbTab'); advance(0.1); };
+const openQuickbuy = () => { openAddons(); };
 const withLang = (setup, f) => { const keep = { Language: $.Language, Localize: $.Localize }; setup(); try { f(); } finally { $.Language = keep.Language; $.Localize = keep.Localize; if (!keep.Language) delete $.Language; } };
 // English: no $.Language, no loc file (the stand-in's $.Localize hands the token back): the built-in table
 for (const k in storage) delete storage[k];
 start(); openQuickbuy();
-assert(byId('IqbTab').kids[0]._text === 'Quickbuy' && words(byId('IqbBody')).includes('Show Missing Souls') && words(byId('IqbBody')).includes('HUD'), 'English: tab, rows and sections from the table: ' + words(byId('IqbBody')).slice(0, 4).join(' | '));
-assert(!words(byId('IqbBody')).concat(words(byId('IqbFoot'))).some(x => /^#|Iqb_|AddonSettings_/.test(x)), 'English: no token shows as text');
-assert(words(byId('IqbFoot')).includes('Reset Quickbuy') && !words(byId('IqbFoot')).includes('Reset tab') && byId('IqbTab').kids[0]._text === 'Quickbuy', 'English: Reset Quickbuy button, tab stays Quickbuy');
-{ const ft = byId('IqbFoot'); assert(!ft.kids.some(k => k.cls.has('HudppFootMain')) && ft.kids.some(k => k.cls.has('HudppStatus')) && ft.kids[ft.kids.length - 1].id === 'IqbReset', 'reset button is a direct child of the foot, last (right-hand side), not wrapped in FootMain'); }
+assert(byId('IqbTitle')._text === 'Quickbuy' && words(byId('IqbBody')).includes('Show Missing Souls') && words(byId('IqbBody')).includes('HUD'), 'English: title, rows and sections from the table: ' + words(byId('IqbBody')).slice(0, 4).join(' | '));
+assert(!words(byId('IqbBody')).concat(words(byId('IqbHead'))).concat(words(byId('AddonSettingsHead'))).some(x => /^#|Iqb_|AddonSettings_/.test(x)), 'English: no token shows as text');
+assert(byId('IqbTitle')._text === 'Quickbuy' && byId('IqbReset') && !words(byId('IqbHead')).includes('Reset Quickbuy') && !words(byId('IqbHead')).includes('Reset tab'), 'English: icon reset on the header, no Reset tab label');
+{ const rs = byId('IqbReset'); assert(rs.applied.visibility === 'collapse', 'reset hidden until hover'); byId('IqbHead').events.onmouseover(); assert(rs.applied.visibility === 'visible', 'reset shows when the header is hovered'); rs.events.onmouseover(); assert(S.tip && S.tip.text === 'Reset Quickbuy', 'hovering reset tips Reset Quickbuy: ' + (S.tip && S.tip.text)); rs.events.onmouseout(); byId('IqbHead').events.onmouseout(); advance(0); assert(rs.applied.visibility === 'collapse', 'reset hides again when the pointer leaves'); }
+
+assert(byId('AddonSettingsStatus').parent === byId('AddonSettingsHead') && byId('IqbReset').parent.id === 'IqbHead', 'window head has the status; per-addon reset is on the addon header');
 assert(/\(english, words from the built-in table\)/.test(S.info[0]), 'console says language and where the words came from: ' + S.info[0]);
 H.globalClass('gShopOpen', true); advance(0.3);
 assert(/^Queue [\d,]+ - ([\d,]+ to go|ready)$/.test(total()), 'English shop total: ' + total());
@@ -456,23 +497,26 @@ H.globalClass('gShopOpen', false); advance(0.3);
 // reset tab: defaults back, saved once, "Saved" with HUD++'s class
 click('IqbRow_hud'); click('IqbCountUp'); advance(1.5);
 assert(JSON.parse(storage.improved_quickbuy_settings).hud === false && JSON.parse(storage.improved_quickbuy_settings).count === 4, 'changed before reset');
-{ const st = byId('IqbFoot').FindChildrenWithClassTraverse('AddonSettingsStatus')[0]; assert(st._text === 'Saved' && st.cls.has('Hudpp_saved'), 'CompLock tab: "Saved" after a change, with HUD++\'s saved class: ' + st._text); }
+{ const st = byId('AddonSettingsStatus'); assert(st._text === 'Saved' && st.cls.has('Hudpp_saved') && !st.applied.color, 'ADDONS: "Saved" with Hudpp_saved, color left to CompLock CSS (teal): ' + st._text); }
 net.writes.length = 0; click('IqbReset'); advance(1.5);
 { const v = JSON.parse(storage.improved_quickbuy_settings); assert(v.on === true && v.hud === true && v.count === 3 && v.runningTotals === true && v.queueTotal === true && net.writes.length === 1, 'Reset tab: our defaults back and saved once: ' + JSON.stringify(v)); }
 assert(row('hud').cls.has('HudppOn') && Math.abs(byId('IqbCountBar').value - 0.5) < 1e-6 && cells().length === 2, 'Reset tab: rows, slider and HUD follow');
+{ byId('IqbHead').events.onmouseover(); byId('IqbReset').events.onmouseover(); assert(byId('IqbReset').cls.has('HudppUndo') && S.tip && S.tip.text === 'Undo', 'Reset turns into Undo for 6 s (tooltip)'); byId('IqbReset').events.onmouseout(); byId('IqbHead').events.onmouseout(); advance(0); }
+advance(6);
+{ byId('IqbHead').events.onmouseover(); byId('IqbReset').events.onmouseover(); assert(byId('IqbReset').cls.has('HudppIdle') && !byId('IqbReset').cls.has('HudppUndo') && S.tip && S.tip.text === 'Reset Quickbuy', 'after 6 s the button is Reset again and idle'); byId('IqbReset').events.onmouseout(); byId('IqbHead').events.onmouseout(); advance(0); }
 { const before = net.writes.length; click('IqbReset'); advance(1.5); assert(net.writes.length === before, 'Reset tab at defaults: no store write'); }
 assert(!('hudpp_settings' in storage), 'Reset tab never touches CompLock\'s settings');
 // German from $.Language()
 withLang(() => { $.Language = () => 'german'; }, () => {
 	start(); openQuickbuy();
 	const w = words(byId('IqbBody'));
-	assert(w.includes('Fehlende Seelen anzeigen') && w.includes('Aktivieren') && words(byId('IqbFoot')).includes('Quickbuy zurücksetzen') && !words(byId('IqbFoot')).includes('Tab zurücksetzen'), 'German ($.Language): rows and Reset Quickbuy in German: ' + w.slice(0, 3).join(' | '));
-	assert(byId('IqbTab').kids[0]._text === 'Quickbuy', 'German: tab title from the German table');
+	{ byId('IqbHead').events.onmouseover(); byId('IqbReset').events.onmouseover(); assert(w.includes('Fehlende Seelen anzeigen') && S.tip && S.tip.text === 'Quickbuy zurücksetzen' && !words(byId('IqbHead')).includes('Tab zurücksetzen'), 'German ($.Language): rows and Reset Quickbuy in German: ' + w.slice(0, 3).join(' | ')); byId('IqbReset').events.onmouseout(); byId('IqbHead').events.onmouseout(); advance(0); }
+	assert(byId('IqbTitle')._text === 'Quickbuy', 'German: addon title from the German table');
 	H.globalClass('gShopOpen', true); advance(0.3);
 	assert(/^Gesamt [\d,]+ - (noch [\d,]+|bereit)$/.test(total()), 'German shop total: ' + total());
 	H.globalClass('gShopOpen', false); advance(0.3);
 	click('IqbRow_hud'); advance(1.5);
-	assert(byId('IqbFoot').FindChildrenWithClassTraverse('AddonSettingsStatus')[0]._text === 'Gespeichert', 'German status: Gespeichert');
+	assert(byId('AddonSettingsStatus')._text === 'Gespeichert', 'German status: Gespeichert');
 });
 // German from the root's Language_german class (no $.Language)
 withLang(() => { delete $.Language; }, () => {
@@ -480,21 +524,20 @@ withLang(() => { delete $.Language; }, () => {
 	assert(words(byId('IqbBody')).includes('Zwischensummen'), 'German (Language_german class): rows in German');
 });
 // a language without a table: English
-withLang(() => { $.Language = () => 'vietnamese'; }, () => { start(); openQuickbuy(); assert(words(byId('IqbBody')).includes('Running Totals') && words(byId('IqbFoot')).includes('Reset Quickbuy'), 'Vietnamese (no table): English'); });
+withLang(() => { $.Language = () => 'vietnamese'; }, () => { start(); openQuickbuy(); byId('IqbHead').events.onmouseover(); byId('IqbReset').events.onmouseover(); assert(words(byId('IqbBody')).includes('Running Totals') && S.tip && S.tip.text === 'Reset Quickbuy', 'Vietnamese (no table): English'); });
 withLang(() => { $.Language = () => 'french'; }, () => {
 	start(); openQuickbuy();
-	assert(typeof byId('IqbRow_on').events.onmouseover === 'function', 'French Enable row hooks hover');
-	byId('IqbRow_on').events.onmouseover();
+	assert(typeof byId('IqbMaster').events.onmouseover === 'function', 'French Enable (master) hooks hover');
+	byId('IqbMaster').events.onmouseover();
 	assert(S.tip && !/'/.test(S.tip.text) && /dachat rapide/.test(S.tip.text), 'French tooltip strips apostrophes like HUD++: ' + (S.tip && S.tip.text));
-	byId('IqbRow_on').events.onmouseout();
+	byId('IqbMaster').events.onmouseout();
 });
 // $.Language broken: English, no error
-withLang(() => { $.Language = () => { throw new Error('no'); }; }, () => { start(); openQuickbuy(); assert(words(byId('IqbBody')).includes('Enable') && S.errors.filter(e => !/language/.test(e)).length === 0, 'broken $.Language: English: ' + S.errors.join(' | ')); });
+withLang(() => { $.Language = () => { throw new Error('no'); }; }, () => { start(); openQuickbuy(); assert(words(byId('IqbBody')).includes('Show Missing Souls') && S.errors.filter(e => !/language/.test(e)).length === 0, 'broken $.Language: English: ' + S.errors.join(' | ')); });
 // the game's loc file loaded: its text wins over the table
-withLang(() => { $.Language = () => 'german'; $.Localize = s => (s === '#Iqb_Enable' ? 'Einschalten (loc)' : s); }, () => {
+withLang(() => { $.Language = () => 'german'; $.Localize = s => (s === '#Iqb_Enable' ? 'Einschalten (loc)' : s === '#Iqb_ShowMissing' ? 'Fehlend (loc)' : s); }, () => {
 	start(); openQuickbuy();
-	const w = words(byId('IqbBody'));
-	assert(w.includes('Einschalten (loc)') && w.includes('Zwischensummen'), 'loc file token wins, the rest from the table: ' + w.slice(0, 3).join(' | '));
+	assert(words(byId('IqbBody')).includes('Fehlend (loc)') && words(byId('IqbBody')).includes('Zwischensummen'), 'loc file token wins, the rest from the table');
 	assert(/words from the game's loc file/.test(S.info[0]), 'console: loc file found: ' + S.info[0]);
 });
 // $.Localize returning the bare token (another engine habit) still falls back
@@ -502,7 +545,7 @@ withLang(() => { $.Localize = s => s.replace(/^#/, ''); }, () => { start(); open
 // a token missing from the German table: English for that one
 {
 	const SRC2 = SRC.replace("Iqb_RunningTotals: 'Zwischensummen',", '');
-	withLang(() => { $.Language = () => 'german'; }, () => { buildHud('vanilla'); S.load(SRC2); advance(2); openQuickbuy(); assert(words(byId('IqbBody')).includes('Running Totals') && words(byId('IqbBody')).includes('Aktivieren'), 'token missing in German: English for it, German for the rest'); });
+	withLang(() => { $.Language = () => 'german'; }, () => { buildHud('vanilla'); S.load(SRC2); advance(2); openQuickbuy(); assert(words(byId('IqbBody')).includes('Running Totals') && words(byId('IqbBody')).includes('Fehlende Seelen anzeigen'), 'token missing in German: English for it, German for the rest'); });
 }
 // a token in no table at all: its bare name, never '#Token'
 {
@@ -517,7 +560,7 @@ withLang(() => { $.Localize = s => s.replace(/^#/, ''); }, () => { start(); open
 	const n = t => (t.match(/^\t\t"/gm) || []).length;
 	assert(n(de) === n(en) && n(en) > 10, 'loc files: same token count per language: ' + n(en));
 }
-// no HUD++: window words, clicks inside do not close, last tab remembered
+// no HUD++: window words, clicks inside do not close
 withLang(() => { $.Language = () => 'german'; }, () => {
 	for (const k in storage) delete storage[k];
 	buildHud('vanilla'); H.menuButton.parent.DeleteAsync(); S.load(SRC); advance(2);
@@ -528,12 +571,11 @@ withLang(() => { $.Language = () => 'german'; }, () => {
 	assert(head.type === 'Button' && main.type === 'Button' && typeof head.events.onactivate === 'function' && typeof main.events.onactivate === 'function', 'window head and body catch clicks (no click falls through to the Esc menu background)');
 	head.events.onactivate(); main.events.onactivate(); advance(0.1);
 	assert(byId('AddonSettingsHost').applied.visibility === 'visible', 'clicks inside the window keep it open');
-	assert(words(byId('IqbBody')).includes('Quickbuy zurücksetzen') && !words(byId('IqbBody')).includes('Tab zurücksetzen'), 'window: Reset Quickbuy in German');
+	{ byId('IqbHead').events.onmouseover(); byId('IqbReset').events.onmouseover(); assert(S.tip && S.tip.text === 'Quickbuy zurücksetzen' && !words(byId('IqbBody')).concat(words(byId('IqbHead'))).includes('Tab zurücksetzen'), 'window: Reset Quickbuy in German'); byId('IqbReset').events.onmouseout(); byId('IqbHead').events.onmouseout(); advance(0); }
 	click('IqbRow_hud'); advance(1.5);
-	{ const st = byId('IqbBody').FindChildrenWithClassTraverse('AddonSettingsStatus')[0]; assert(st._text === 'Gespeichert' && st.applied.color === '#5fe69eaa', 'window: status Gespeichert in green'); }
+	{ const st = byId('AddonSettingsStatus'); assert(st._text === 'Gespeichert' && st.applied.color === '#5fe69e', 'window: status Gespeichert in teal'); }
 	click('IqbReset'); advance(1.5);
 	assert(JSON.parse(storage.improved_quickbuy_settings).hud === true, 'window: Reset tab works');
-	assert(H.root.attrs['AddonSettings:tab'] === 'improved_quickbuy', 'window: selected tab remembered');
 });
 
 // ===== 18. v10: every language Deadlock ships, complete, and fitting CompLock's 400 px menu =====
@@ -569,8 +611,9 @@ withLang(() => { $.Language = () => 'german'; }, () => {
 	SHIPPED.forEach(l => withLang(() => { $.Language = () => l; }, () => {
 		for (const k in storage) delete storage[k];
 		start(); openQuickbuy();
-		const w = words(byId('IqbBody')), f = words(byId('IqbFoot'));
-		assert(byId('IqbTab').kids[0]._text === STR[l].Iqb_Tab && w.includes(STR[l].Iqb_ShowMissing) && w.includes(STR[l].Iqb_Shop) && f.includes(STR[l].Iqb_Reset) && !f.includes(WRD[l].AddonSettings_ResetTab), l + ': menu in ' + l);
+		const w = words(byId('IqbBody')), f = words(byId('IqbHead'));
+		byId('IqbHead').events.onmouseover(); byId('IqbReset').events.onmouseover();
+		assert(byId('IqbTitle')._text === STR[l].Iqb_Tab && w.includes(STR[l].Iqb_ShowMissing) && w.includes(STR[l].Iqb_Shop) && S.tip && S.tip.text === STR[l].Iqb_Reset.replace(/['\\\\]/g, '') && !f.includes(WRD[l].AddonSettings_ResetTab), l + ': menu in ' + l);
 		H.globalClass('gShopOpen', true); advance(0.3);
 		const reTotal = s => new RegExp('^' + s.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace('{0}', '[\\d,]+').replace('{1}', '[\\d,]+') + '$');
 		assert(reTotal(STR[l].Iqb_TotalToGo).test(total()) || reTotal(STR[l].Iqb_TotalReady).test(total()), l + ': shop total: ' + total());
@@ -581,6 +624,16 @@ withLang(() => { $.Language = () => 'german'; }, () => {
 	const SOULS = { german: 'Seelen', french: 'âmes', spanish: 'almas', latam: 'almas', brazilian: 'almas', italian: 'anime', polish: 'dusz', czech: 'duš', russian: 'душ', ukrainian: 'душ', turkish: 'ruh', indonesian: 'jiwa', thai: 'โซลส์', japanese: 'ソウル', koreana: '영혼', schinese: '魂魄', tchinese: '魂魄' };
 	Object.keys(SOULS).forEach(l => assert(STR[l].Iqb_ShowMissing.toLowerCase().includes(SOULS[l].toLowerCase()) || STR[l].Iqb_ShowMissing_Desc.toLowerCase().includes(SOULS[l].toLowerCase()), l + ': Valve\'s word for Souls (' + SOULS[l] + ')'));
 }
+
+// ===== Esc pins: .CanChangeHero lands on #EscapeMenu after registration, before the first Esc open =====
+for (const k in storage) delete storage[k];
+start();
+assert(byId('AddonSettingsRow') && byId('HudppPlay').applied.marginBottom === '312px', 'fresh start, no CanChangeHero yet: PLAY at 280+32');
+H.esc.cls.add('CanChangeHero'); advance(0.3); // no click of ours: COMPLOCK and ADDONS never opened
+assert(byId('HudppPlay').applied.marginBottom === '382px' && byId('changehero').applied.marginBottom === '312px', 'CanChangeHero arriving later: the next menu look lifts PLAY to 350+32 (PLAY sat on SWAP HERO on the first Esc open, lea 22.11. 11:03 and 11:25)');
+{ S.resetCounts(); advance(10); assert(C.styleWrites === 0, 'class unchanged: no further PLAY writes: ' + C.styleWrites); }
+H.esc.cls.delete('CanChangeHero'); advance(0.3);
+assert(byId('HudppPlay').applied.marginBottom === '312px', 'CanChangeHero gone: PLAY back to 280+32');
 
 console.log(`${passes} passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

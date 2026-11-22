@@ -1,13 +1,13 @@
 // Improved Quickbuy: the next quickbuy items and the souls still missing for each, in play and in the shop.
 // Options are registered with Addon Settings (lib/addon-settings, vendored in front of this file): a
-// "Quickbuy" tab in CompLock HUD++'s menu, or the ADDONS window in the Esc menu without HUD++.
+// "Quickbuy" tab in the ADDONS menu (placement 'addons'). CompLock keeps HUD, Minimap and Crosshair.
 //
 // Cost model: no per-frame work. One timer runs only while something of ours can be seen (4 Hz in play,
 // 5 Hz with the shop open) and stops when everything is off. Panels are looked up once, inside the
 // quickbuy panel or by direct child lookups, and every class, text and image is written only on change.
 // HUD++'s panels get no event handlers (v6 of the old mod blocked its menu that way).
 
-const VERSION = '1.0.3';
+const VERSION = '1.0.4';
 const ok = p => !!(p && p.IsValid && p.IsValid());
 const cancel = h => { if (h) { try { $.CancelScheduled(h); } catch (e) { /* already ran */ } } return null; };
 const say = e => { try { $.Msg('Improved Quickbuy: ' + e); } catch (x) { /* no console */ } };
@@ -385,10 +385,10 @@ const tick = () => {
 const kick = () => { dirty = true; timer = cancel(timer); timer = $.Schedule(0, tick); };
 
 // ---------- settings: registered with Addon Settings (lib/addon-settings), the same way any addon does ----------
-// The library hosts them as a "Quickbuy" tab in CompLock HUD++'s menu, or in its ADDONS window without HUD++,
-// and keeps them on deadlockconfig.com's store page under improved_quickbuy_settings (as before).
+// The library hosts them as a "Quickbuy" tab in the ADDONS menu, and keeps them on
+// deadlockconfig.com's store page under improved_quickbuy_settings (as before).
 const SCHEMA = { // '#Iqb_*': src/strings.js, in the game's language
-	id: 'improved_quickbuy', title: '#Iqb_Tab', resetLabel: '#Iqb_Reset', prefix: 'Iqb', strings: STRINGS,
+	id: 'improved_quickbuy', title: '#Iqb_Tab', resetLabel: '#Iqb_Reset', prefix: 'Iqb', placement: 'addons', author: 'luxus', toggle: 'on', strings: STRINGS,
 	controls: [
 		{ key: 'on', type: 'toggle', section: '#Iqb_Section', title: '#Iqb_Enable', desc: '#Iqb_Enable_Desc', default: DEFAULTS.on },
 		{ key: 'hud', type: 'toggle', section: '#Iqb_Hud', title: '#Iqb_ShowMissing', desc: '#Iqb_ShowMissing_Desc', default: DEFAULTS.hud, needs: ['on'] },

@@ -4,19 +4,22 @@ Addon Settings gives Deadlock Panorama addons one shared settings menu. It lives
 and is vendored, unchanged, into each addon that uses it. Improved Quickbuy is its first client and uses
 only the public API described here.
 
-- With CompLock HUD++ installed, every registered addon gets a tab in CompLock's menu.
-- Without HUD++, the Esc menu gets an **ADDONS** button that opens a window with a sidebar, one entry per
-  addon.
+- The Esc menu gets an **ADDONS** button that opens a larger CompLock-shaped panel. Addons with
+  `placement: 'addons'` (the default) are listed vertically; the body scrolls when the list is tall.
+- With CompLock HUD++ installed, an addon may also set `placement: 'complock'` to appear as a tab in
+  CompLock's menu. If HUD++ is missing, that addon falls back to ADDONS.
 - Values are stored on the same store page CompLock uses (deadlockconfig.com), one key per addon:
   `<id>_settings`. A HUD reload in the same game reads a session copy instead of loading the page again.
+  The host does not write to the store until the saved settings have loaded (`known`).
 
-Version: library `1.1.3`, `BUILD` 5, wire `API` 1.
+Version: library `1.2.3`, `BUILD` 9, wire `API` 1.
 
 ## Quick start
 
 ```js
 const settings = AddonSettings.register({
 	id: 'my_addon', title: 'My Addon', prefix: 'MyAddon',
+	toggle: 'enabled',
 	controls: [
 		{ key: 'enabled', type: 'toggle', title: 'Enable', desc: 'Turn the addon on.', default: true },
 		{ key: 'size', type: 'slider', title: 'Size', min: 1, max: 5, step: 1, default: 3, needs: ['enabled'] }
@@ -32,9 +35,13 @@ applyMySettings(settings.values()); // defaults until the saved values arrive
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `id` | string, `a-z 0-9 _`, 1–40 chars | Unique per addon. Store key `<id>_settings`. |
-| `title` | text | Tab and sidebar label. |
-| `resetLabel` | text | Optional. Label of the reset button (default **Reset tab**). The button sits on the right of the foot, like CompLock's own reset. |
-| `prefix` | string, `[A-Za-z][A-Za-z0-9]*` | Panel id prefix (`<prefix>Tab`, `<prefix>Body`, `<prefix>Row_<key>`). Derived from `id` if missing. |
+| `title` | text | Addon name in the list header (and CompLock tab label when `placement` is `complock`). |
+| `placement` | `'addons'` or `'complock'` | Optional. Where the addon is hosted (default **addons**, including legacy schemas that omit the field). `complock` still uses CompLock tabs and falls back to ADDONS when HUD++ is not installed. |
+| `author` | text | Optional. If set, the addon's header shows **by &lt;author&gt;** (`HudppCredit`). Nothing is shown when it is omitted. |
+| `section` | text | Optional. Default section title for controls that omit `section`. |
+| `toggle` | string | Optional. Key of an existing `toggle` control that is the addon's master on/off switch. That control is rendered on the header, not as a settings row. When it is off, the addon's further settings are hidden (`collapse`), not just disabled. An addon without `toggle` has no master switch and keeps its settings visible. |
+| `resetLabel` | text | Optional. Label of the reset button (default **Reset tab**). After a reset the button turns into **Undo** for 6 s, like CompLock. In ADDONS the button sits on that addon's header so Reset stays reachable when settings are collapsed. In a CompLock tab it stays on that tab's foot. |
+| `prefix` | string, `[A-Za-z][A-Za-z0-9]*` | Panel id prefix (`<prefix>Block`, `<prefix>Head`, `<prefix>Title`, `<prefix>Master`, `<prefix>Body`, `<prefix>Row_<key>`; CompLock tabs still use `<prefix>Tab`). Derived from `id` if missing. |
 | `strings` | `{ <language>: { <Token>: text } }` | Optional. The addon's own words for `#Token` texts (see Languages). |
 | `controls` | array | The rows, in order. |
 
@@ -44,12 +51,13 @@ Each control:
 | --- | --- | --- |
 | `key` | all | `[A-Za-z][A-Za-z0-9_]*`, the value's name. |
 | `type` | all | `toggle`, `slider` or `select`. |
-| `title`, `desc` | all | Text. `desc` is the row's tooltip: on hover the library fires Valve's `UIShowTextTooltip` (the same event HUD++ and the escape menu use; apostrophes and backslashes are stripped because the game quotes the event string with `'`). Toggle rows are a compact 34 px line (title left, switch right), like HUD++'s own rows, including the `HudppChildMark` indent when `needs` is set. Sliders have no description tooltip (HUD++ sliders only tip "Reset to …" on a changed value). |
-| `section` | all | Text. Rows with the same section are grouped under its title. |
-| `default` | all | Used until a saved value arrives, and by **Reset tab**. |
+| `title`, `desc` | all | Text. `desc` is the row's tooltip: on hover the library fires Valve's `UIShowTextTooltip` (the same event HUD++ and the escape menu use; apostrophes and backslashes are stripped because the game quotes the event string with `'`). Toggle rows are a compact 34 px line (title left, switch right), like HUD++'s own rows, including the `HudppChildMark` indent when `needs` is set. A row that is off because of `needs` is dimmed with `HudppDim` and its tooltip says **Needs {title}**. Sliders have no description tooltip (HUD++ sliders only tip "Reset to …" on a changed value). |
+| `section` | all | Text. Rows with the same section are grouped under a `HudppSectionTitle`. If omitted, the schema `section` or the addon `title` is used, so every page has at least one headline. |
+| `default` | all | Used until a saved value arrives, and by **Reset**. |
 | `needs` | all | Keys of toggles that must be on for this row to be active (greyed out otherwise). |
-| `min`, `max`, `step` | slider | Values are clamped and snapped to the step. |
-| `options` | select | `[{ value, label }]` or plain values. |
+| `invert` | toggle | Optional. The switch looks on when the value is off (CompLock's inverted toggles). |
+| `min`, `max`, `step` | slider | Values are clamped and snapped to the step. Clicking a changed value label puts the default back (tooltip **Reset to {value}**). Steppers repeat while held. |
+| `options` | select | `[{ value, label }]` or plain values. Shown as `HudppChoice` chips (and prev/next steppers). |
 
 "Text" is a plain string or a `#Token` (see Languages). Invalid controls are skipped with a console line.
 Stored or requested values are always made valid for their control (wrong type: default; out of range:
@@ -68,11 +76,12 @@ clamped; unknown option: default).
 | `status()` | The last status text ("Saved", an error, ...). |
 
 `onChange(values)` runs once the saved values are loaded (if they differ from the defaults) and after every
-change from the menu, including **Reset tab**.
+change from the menu, including **Reset**.
 
-Other exports: `AddonSettings.API`, `BUILD`, `VERSION`, `language()`, `localize(text, table, args)`, and
-for an addon with its own timer `ride(() => timerRuns)` plus `pulse()` on each tick, so the host's look at
-HUD++'s menu shares that timer instead of starting its own.
+Other exports: `AddonSettings.API`, `BUILD`, `VERSION`, `language()`, `localize(text, table, args)`,
+`probe(ids)` (see Mid-match registration), and for an addon with its own timer `ride(() => timerRuns)`
+plus `pulse()` on each tick, so the host's look at HUD++'s menu shares that timer instead of starting
+its own.
 
 ## Languages
 
@@ -86,7 +95,8 @@ The library follows the game's client language and falls back to English.
   3. `strings.english.Token`;
   4. the bare token name (`Token`), so a missing word is visible but never shows a `#`.
 - **Placeholders:** `localize('#Token', table, [a, b])` fills `{0}` and `{1}`.
-- **Host words** (ADDONS, Reset tab, Saving..., Saved, the error lines) are built into the library for
+- **Host words** (ADDONS, Reset tab, Undo, Reset, Reset to {0}, Needs {0}, Saving..., Saved, the short
+  and long status lines) are built into the library for
   every language Deadlock lists in `gameinfo.gi` (`SupportedLanguages`: english, german, french, spanish,
   latam, brazilian, italian, polish, czech, russian, ukrainian, turkish, indonesian, thai, japanese,
   koreana, schinese) plus tchinese. English and German are hand-written, the rest machine-made; fixes welcome. They are deliberately not shipped as loc files: two vendored copies must never define
@@ -112,21 +122,48 @@ an update. So the JS table is what the addon relies on. The console line at load
 `Improved Quickbuy: v10 loaded (german, words from the built-in table)`. If a future game build loads addon
 loc files, the same tokens resolve from them with no code change.
 
-## Settings window and CompLock tabs
+## ADDONS menu and CompLock tabs
 
-- **CompLock HUD++ present:** the host adds a tab button per addon to CompLock's tab bar once HUD++ has
-  built its menu. A tab's body and foot (status line, reset button on the right) are built on its first click. While one
-  of our tabs is shown, HUD++'s own bodies are hidden with an inline visibility and its foot (status and
-  reset, which act on its own tabs) is hidden. This works with both the 18 Nov two-tab CSS and the 20/21 Nov
-  three-tab inverted CSS (HUD, Minimap, Crosshair); the library does not toggle `HudppTab_*` classes to hide
-  those bodies. HUD++'s `showTab` returns at once when the requested tab is already its current one, so a
-  click from one of our tabs back to that same HUD++ tab (often Crosshair) would do nothing. While one of
-  our tabs is shown the library hooks those tab buttons, unhooks on leave, and Activate()s HUD++'s own
-  handler (moving it off the parked tab first if needed). It never writes CompLock's settings.
-- **No HUD++:** the **ADDONS** button sits above Valve's settings row in the Esc menu. The window, its head
-  and close button are built on the first open, a page per addon on its first selection. Clicks inside the
-  window stay in it. The X button or the ADDONS button close it; it hides with the Esc menu. The last
-  selected tab is remembered until the game closes.
+- **ADDONS:** the **ADDONS** button sits in its own `#AddonSettingsRow` in `#SubOptions`, immediately
+  above Valve's settings row. With HUD++ it is placed directly below the existing COMPLOCK
+  `.HudppMenuRow` (not beside it). `#SubOptions` is `vertical-align: bottom; margin-bottom: 132px;
+  height: fit-children` and `#Menu` is `flow-children: none`, so an extra row grows upward into
+  `#changehero` (`margin-bottom: 280px`) and `#HudppPlay` (`280px`, or `350px` with `.CanChangeHero`).
+  The extra row is 32 px (`.nav_menu_item.minor Label { height: 32px }`); the host adds the same 32 px
+  to those two pins (`312px` / `382px`) so SWAP HERO and PLAY stay in their designed gap above
+  PLAYER FEEDBACK. The panel is 560 px wide and has a CompLock-shaped head (title ADDONS, boxed close
+  `HudppIconButton HudppClose`), a scrollable body (`maxHeight` 640 px) listing every ADDONS addon
+  vertically, and a shared foot under the body (status only, including `Hudpp_saved` teal for **Saved**).
+  Each addon is a header (`AddonSettingsAddonHead`): name on the left, optional `HudppCredit` "by
+  &lt;author&gt;" when the schema sets `author`, Reset, and a master switch when the schema sets
+  `toggle`. Further settings sit under that header, indented, with `HudppSectionTitle` groups (a
+  control's `section`, or the schema `section`, or the addon title). Turning the master off hides
+  those settings (`collapse`); Reset on the header stays visible. The window is built on the first
+  open; each addon already registered is mounted then, and a later registration appends a new block.
+  A registration without `placement` (legacy 1.1.x schemas) defaults to ADDONS, including when it
+  arrives after the host is already built. Clicks inside the window stay in it (they do not resume
+  the game). The X button or the ADDONS button close only ADDONS, not the match. With HUD++ installed
+  the panel uses CompLock's widget classes for the same look and does not inline those styles (so
+  hover and status colours apply); without HUD++ the same classes are styled inline (the library
+  does not copy HUD++'s CSS).
+- **CompLock tabs** (`placement: 'complock'`, HUD++ present): the host adds a tab button per such addon to
+  CompLock's tab bar once HUD++ has built its menu. A tab's body and foot are built on its first click. While
+  one of our tabs is shown, HUD++'s own bodies are hidden with an inline visibility and its foot is hidden.
+  This works with both the 18 Nov two-tab CSS and the 20/21 Nov three-tab inverted CSS (HUD, Minimap,
+  Crosshair); the library does not toggle `HudppTab_*` classes to hide those bodies. HUD++'s `showTab`
+  returns at once when the requested tab is already its current one, so a click from one of our tabs back
+  to that same HUD++ tab (often Crosshair) would do nothing. While one of our tabs is shown the library
+  hooks those tab buttons, unhooks on leave, and Activate()s HUD++'s own handler (moving it off the parked
+  tab first if needed). It never writes CompLock's settings.
+- Re-registering the same id merges new keys from the session and the store into the existing values.
+
+## Mid-match registration
+
+Addon scripts that only load on a later screen (post-game, Match History) can still appear in ADDONS during
+a match. The host looks for a registrar layout at
+`s2r://panorama/layout/addon_settings/register/<id>.xml` when `AddonSettings.probe(['id', ...])` is called.
+Call `probe` only for ids that actually ship `panorama/layout/addon_settings/register/<id>.xml` in a VPK;
+BLoadLayout of a missing file is a `ResourceSystem` ERROR_FILEOPEN. The registrar is a small layout whose script only calls `register()`.
 
 ## Host election and versions
 
@@ -166,4 +203,5 @@ released change to the library so the newest copy hosts.
    a `prefix` no other addon uses.
 4. Optional: put your texts in `strings` with `#Token`s, one block per language.
 5. Compile the pak as usual (for example `modlock panorama compile build/pak -o my-addon.vpk`).
-6. Test with and without HUD++: your tab in CompLock, or your entry in the ADDONS window.
+6. Test with and without HUD++: your block in the ADDONS list, and, if you set `placement: 'complock'`, your tab in
+   CompLock (and the ADDONS fallback when HUD++ is missing).

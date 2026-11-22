@@ -8,13 +8,16 @@ const resetCounts = () => Object.keys(C).forEach(k => { C[k] = 0; });
 
 let now = 0, seq = 0, jobs = [], handlers = [], errors = [], info = [], tip = null, tips = [];
 // the script's one-time status lines (load, first update, strip shown); anything else it logs is an error
-const INFO = /^(Improved Quickbuy: ((?:v\d+|\d+\.\d+\.\d+) loaded|first update: |HUD row built )|Addon Settings: (build \d+ hosts|no Esc menu ))/;
+const INFO = /^(Improved Quickbuy: ((?:v\d+|\d+\.\d+\.\d+) loaded|first update: |HUD row built )|Addon Settings: (build \d+ hosts|no Esc menu |open:|tab:|body:|addon:|Esc menu:))/;
 const storage = {};
 const net = { online: true, writes: [] };
 
 class P {
 	constructor(type, parent, id) {
-		this.type = type; this.id = id || ''; this.cls = new Set(); this.kids = []; this.attrs = {}; this.parent = null; this.valid = true; this.events = {}; this._text = ''; this.applied = {};
+		this.type = type;
+		// The engine's panel.id is read-only after CreatePanel (test4: TypeError on assign).
+		Object.defineProperty(this, 'id', { value: id || '', writable: false, enumerable: true, configurable: false });
+		this.cls = new Set(); this.kids = []; this.attrs = {}; this.parent = null; this.valid = true; this.events = {}; this._text = ''; this.applied = {};
 		const self = this;
 		this.style = new Proxy({}, { set(o, k, v) { C.styleWrites++; o[k] = v; if (v !== null && v !== undefined) self.applied[k] = v; return true; } });
 		if (parent) { parent.kids.push(this); this.parent = parent; }
@@ -40,6 +43,7 @@ class P {
 	DeleteAsync() { this.valid = false; if (this.parent) this.parent.kids.splice(this.parent.kids.indexOf(this), 1); }
 	Activate() { $.DispatchEvent('Activated', this); }
 	SetImage(src) { C.images++; this.img = src; }
+	BLoadLayout(url) { C.layouts = (C.layouts || 0) + 1; this.layout = url; return true; }
 	SetURL(url) { // CitadelHTMLPanel showing store.html
 		const title = t => $.Schedule(0.05, () => handlers.filter(h => h.p === this && h.ev === 'HTMLTitle').forEach(h => h.f(this, t)));
 		const hash = url.split('#')[1];
@@ -90,8 +94,8 @@ const mk = (t, parent, id, cls, text) => { const x = new P(t, parent, id); (cls 
 const filler = (parent, n, tag) => { for (let i = 0; i < n; i++) { const a = mk('Panel', parent, tag + i); mk('Label', a, ''); mk('Image', a, ''); } };
 
 // a Valve CitadelHudQuickbuyEntry as its layout builds it (hud_quickbuy_entry.xml, citadel_shop_mod_icon.xml)
-const entry = (parent, name, cost, extra) => {
-	const e = mk('Panel', parent, '', 'QuickbuyItem');
+const entry = (parent, name, cost, extra, id) => {
+	const e = mk('Panel', parent, id || '', 'QuickbuyItem');
 	const content = mk('Panel', e, 'ItemContentPanel');
 	const icon = mk('Panel', content, 'ModIcon');
 	const box = mk('Panel', mk('Panel', icon, 'modIconContainer'), 'mod_icon_background');
@@ -137,7 +141,7 @@ const buildHud = (layout, queueItems) => {
 	const mini = mk('Panel', ctx, 'HudMini', 'HudQuickbuyElement');
 	mk('Panel', mini, 'HudMiniFill'); filler(mk('Panel', mini, '', 'ItemsBlockedReason'), 2, 'Blk');
 	const miniC = mk('Panel', mini, 'HudMiniContents');
-	H.next = entry(miniC, 'Extra Health', '800'); H.next.id = 'QuickbuyNext';
+	H.next = entry(miniC, 'Extra Health', '800', null, 'QuickbuyNext');
 	filler(mk('Panel', ctx, 'KeyboardHints'), 4, 'Hint');
 	if (layout === 'v7') {
 		const ns = mk('Panel', ctx, 'QuickbuyNextSoulsNeeded'); mk('Image', ns, ''); mk('Label', ns, 'QuickbuyNextSoulsNeededLabel');
@@ -145,7 +149,7 @@ const buildHud = (layout, queueItems) => {
 		for (let n = 2; n <= 5; n++) {
 			const s = mk('Panel', pc, 'QuickbuyUpcomingPreview' + n, 'QuickbuyUpcomingPreviewSlot');
 			const sn = mk('Panel', s, '', 'QuickbuyUpcomingPreviewSoulsNeeded'); mk('Image', sn, ''); mk('Label', sn, `QuickbuyUpcomingPreview${n}SoulsNeededLabel`);
-			entry(mk('Panel', s, '', 'QuickbuyUpcomingMini'), '', '').id = `QuickbuyPreview${n}Entry`;
+			entry(mk('Panel', s, '', 'QuickbuyUpcomingMini'), '', '', null, `QuickbuyPreview${n}Entry`);
 		}
 	}
 	const qc = mk('Panel', ctx, 'QuickBuyQueueContainer');
@@ -163,10 +167,14 @@ const buildHud = (layout, queueItems) => {
 	// the escape menu layout; HUD++ adds its button there, and #HudppPanel on first open
 	const esc = H.esc = mk('Panel', root, 'EscapeMenu');
 	mk('Panel', esc, 'EscapeBackground');
-	const sub = mk('Panel', mk('Panel', mk('Panel', esc, 'LeftStripe'), 'Menu'), 'SubOptions');
+	const menu = mk('Panel', mk('Panel', esc, 'LeftStripe'), 'Menu');
+	H.play = mk('Button', menu, 'HudppPlay', 'nav_menu_item primary');
+	H.changehero = mk('Button', menu, 'changehero', 'nav_menu_item primary');
+	const sub = mk('Panel', menu, 'SubOptions');
 	filler(sub, 6, 'Opt');
 	H.menuButton = mk('Button', mk('Panel', sub, '', 'HudppMenuRow'), 'HudppMenuButton', 'nav_menu_item minor');
 	H.menuButton.events.onactivate = () => press(H.menuButton, () => (H.menu && H.menu.BHasClass('HudppOpen')) ? H.closeMenu() : H.openMenu());
+	mk('Panel', sub, '', 'SettingsRow');
 	H.menu = null; H.tab = 'hud';
 	return H;
 };
