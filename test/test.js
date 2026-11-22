@@ -146,7 +146,7 @@ assert(row('hud').applied.paddingLeft === '28px' && row('runningTotals').applied
 assert(!row('count').kids.some(k => k.cls.has('HudppRowDesc')), 'slider row has no description line (HUD++ sliders have no desc tooltip)');
 assert(typeof byId('IqbMaster').events.onmouseover === 'function' && typeof byId('IqbMaster').events.onmouseout === 'function', 'master switch hooks hover for Valve\'s text tooltip');
 byId('IqbMaster').events.onmouseover();
-assert(S.tip && S.tip.p === byId('IqbMaster') && S.tip.text === 'Souls still missing for your quickbuy items, in the HUD and in the shop.', 'hovering the master shows Enable\'s description as Valve\'s text tooltip: ' + (S.tip && S.tip.text));
+assert(S.tip && S.tip.p === byId('IqbTitles') && S.tip.text === 'Souls still missing for your quickbuy items, in the HUD and in the shop.', 'hovering the master shows Enable\'s description as Valve\'s text tooltip, anchored on the title block: ' + (S.tip && S.tip.text));
 byId('IqbMaster').events.onmouseout();
 assert(!S.tip, 'leaving the row hides the tooltip');
 row('hud').events.onmouseover();
