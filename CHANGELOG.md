@@ -8,6 +8,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+Test build of Improved Quickbuy 1.0.4 / Addon Settings 1.2.3. Not tagged or published yet.
+
+### Fixed
+
+- ADDONS list: older clients without `toggle` get their `on` (or only similarly named) toggle promoted to the header master; a section title that repeats the addon name is dropped. Reset is a small refresh icon, only if the addon has settings beyond that master, and only visible while the header is hovered. Each addon is its own card. Author is a tiny muted "by …" under the name. Child rows use left padding instead of a corner mark.
+- Opening ADDONS threw `TypeError: Cannot assign to read only property 'id'` (Panorama panel.id is read-only after CreatePanel). The title label now gets its id in `CreatePanel`, so the header (master, Reset, author) and the other addons mount. A failed mount no longer stops the rest of the list. Esc menu lookup logs `Esc menu: found|not found looks=N`.
+- With CompLock HUD++ installed, the ADDONS panel was empty: 1.0.4 skipped inline layout styles on our own wrappers, which HUD++ CSS does not define. Chrome is always dressed. Widget classes that HUD++ already styles (close, reset, status, rows) are not inlined, so CompLock's hover and colours apply.
+- With HUD++, the ADDONS button sits on its own line below COMPLOCK (a new `#AddonSettingsRow` after `.HudppMenuRow`). `#changehero` and `#HudppPlay` are lifted by the 32 px row height (280+32, or 350+32 when `.CanChangeHero`) so the taller `#SubOptions` does not overlap SWAP HERO / PLAY.
+
+### Changed
+
+- Addon Settings library `1.2.3` (`BUILD` 9, wire `API` still 1). The ADDONS window drops the tab bar: one larger panel lists addons vertically. Each addon is a header row (name, optional "by &lt;author&gt;" from schema `author`, and Reset) with a master on/off switch when the schema declares `toggle: '&lt;key&gt;'` (an existing toggle). Further settings sit under the header (`HudppSectionTitle` groups, CompLock row look) and collapse when the master is off. An addon without `toggle` has no switch and keeps its settings visible. Per-addon Reset stays on the header so it remains reachable when settings are hidden; the shared footer is status only ("Saved" uses `Hudpp_saved`, teal). Late registrations append to the list. Store keys are unchanged. `placement: 'complock'` still uses CompLock tabs (and falls back to ADDONS when HUD++ is missing). Improved Quickbuy declares `toggle: 'on'` and `author: 'luxus'`.
+- The ADDONS panel uses CompLock's widget class names (`HudppRow`, `HudppSwitch`, `HudppChoice`, `HudppDim`, `HudppUndo`, `HudppIdle`, `HudppCredit`, and so on) so it matches CompLock when HUD++ is installed.
+
+### Added
+
+- CompLock-style behaviours in the shared library: Reset turns into Undo for 6 seconds, hold-to-repeat steppers, "Reset to …" on a changed slider value, choice chips for selects, short status text with a longer tooltip, and a `probe()` call so mid-match addons can register from `panorama/layout/addon_settings/register/<id>.xml`.
+
 ## [1.0.3] - 2026-11-21
 
 ### Fixed
