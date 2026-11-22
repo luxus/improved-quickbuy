@@ -127,7 +127,7 @@ assert(byId('IqbBody').applied.visibility === 'visible', 'with HUD++: selected b
 	assert(S.info.some(m => /Esc menu: found looks=/.test(m)), 'Esc lookup logs the result and the look count');
 	assert(!byId('AddonSettingsClose').applied.width && !byId('AddonSettingsClose').applied.washColor, 'with HUD++: close X not inlined, CompLock CSS styles the boxed icon');
 	assert(byId('IqbReset').cls.has('HudppIconButton') && byId('IqbReset').applied.visibility === 'collapse', 'reset is a small icon, hidden until the header is hovered');
-	assert(byId('AddonSettingsFoot').parent === byId('AddonSettingsHost') && byId('AddonSettingsFoot').kids.some(k => k.cls.has('HudppStatus')) && byId('IqbReset').parent.id === 'IqbHead', 'one shared footer for status; per-addon reset stays on the header');
+	assert(!byId('AddonSettingsFoot') && byId('AddonSettingsStatus').parent === byId('AddonSettingsHead') && byId('IqbReset').parent.id === 'IqbHead', 'status sits in the window head, no footer strip; per-addon reset stays on the addon header');
 	assert(parseInt(byId('AddonSettingsMain').applied.maxHeight, 10) >= 860, 'the list grows to most of the screen before it scrolls (640 px cut the fifth addon off): ' + byId('AddonSettingsMain').applied.maxHeight);
 	H.esc.cls.add('CanChangeHero');
 	click('AddonSettingsButton'); // close; liftPins refreshes
@@ -420,7 +420,7 @@ assert(S.errors.length === 0 && stripShown() && cells().length === 2, 'no HUD++:
 	assert(byId('IqbReset').applied.backgroundColor === '#ffefd714', 'no HUD++: reset hover fills');
 	byId('IqbReset').events.onmouseout();
 	assert(byId('IqbAuthor')._text === 'by luxus', 'no HUD++: tiny author still shown');
-	assert(byId('AddonSettingsFoot').parent === byId('AddonSettingsHost'), 'no HUD++: shared foot is on the host, not in the body');
+	assert(!byId('AddonSettingsFoot') && byId('AddonSettingsStatus').parent === byId('AddonSettingsHead'), 'no HUD++: status in the window head, no footer');
 	click('IqbCountUp'); advance(1);
 	assert(cells().length === 3, 'Items Shown 4 from our window: ' + cells().length);
 	click('AddonSettingsClose'); advance(0.1);
@@ -472,11 +472,11 @@ const withLang = (setup, f) => { const keep = { Language: $.Language, Localize: 
 for (const k in storage) delete storage[k];
 start(); openQuickbuy();
 assert(byId('IqbTitle')._text === 'Quickbuy' && words(byId('IqbBody')).includes('Show Missing Souls') && words(byId('IqbBody')).includes('HUD'), 'English: title, rows and sections from the table: ' + words(byId('IqbBody')).slice(0, 4).join(' | '));
-assert(!words(byId('IqbBody')).concat(words(byId('IqbHead'))).concat(words(byId('AddonSettingsFoot'))).some(x => /^#|Iqb_|AddonSettings_/.test(x)), 'English: no token shows as text');
+assert(!words(byId('IqbBody')).concat(words(byId('IqbHead'))).concat(words(byId('AddonSettingsHead'))).some(x => /^#|Iqb_|AddonSettings_/.test(x)), 'English: no token shows as text');
 assert(byId('IqbTitle')._text === 'Quickbuy' && byId('IqbReset') && !words(byId('IqbHead')).includes('Reset Quickbuy') && !words(byId('IqbHead')).includes('Reset tab'), 'English: icon reset on the header, no Reset tab label');
 { const rs = byId('IqbReset'); assert(rs.applied.visibility === 'collapse', 'reset hidden until hover'); byId('IqbHead').events.onmouseover(); assert(rs.applied.visibility === 'visible', 'reset shows when the header is hovered'); rs.events.onmouseover(); assert(S.tip && S.tip.text === 'Reset Quickbuy', 'hovering reset tips Reset Quickbuy: ' + (S.tip && S.tip.text)); rs.events.onmouseout(); byId('IqbHead').events.onmouseout(); advance(0); assert(rs.applied.visibility === 'collapse', 'reset hides again when the pointer leaves'); }
 
-{ const ft = byId('AddonSettingsFoot'); assert(ft.kids.some(k => k.cls.has('HudppStatus')) && byId('IqbReset').parent.id === 'IqbHead', 'shared foot has status; per-addon reset is on the header'); }
+assert(byId('AddonSettingsStatus').parent === byId('AddonSettingsHead') && byId('IqbReset').parent.id === 'IqbHead', 'window head has the status; per-addon reset is on the addon header');
 assert(/\(english, words from the built-in table\)/.test(S.info[0]), 'console says language and where the words came from: ' + S.info[0]);
 H.globalClass('gShopOpen', true); advance(0.3);
 assert(/^Queue [\d,]+ - ([\d,]+ to go|ready)$/.test(total()), 'English shop total: ' + total());
