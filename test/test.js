@@ -155,7 +155,7 @@ assert(typeof byId('IqbMaster').events.onmouseover === 'function' && typeof byId
 	assert(JSON.stringify(before) === JSON.stringify([master.applied.backgroundColor, byId('IqbSwitch').applied.backgroundColor, row.applied.backgroundColor, track.applied.backgroundColor]), 'toggle hover keeps row and track colours unchanged');
 	assert(before[0] === '#ffefd700' && before[1] === '#5fe69e' && before[2] === '#ffefd70a' && before[3] === '#5fe69e', 'colours pinned inline beat HUD++ hover selectors on both kinds of toggle');
 	row.events.onmouseout(); master.events.onmouseout();
-	assert(byId('AddonSettingsHead').FindChildrenWithClassTraverse('AddonSettingsTitle')[0].applied.fontFamily === 'block', 'ADDONS uses the game block headline font with and without CompLock');
+	assert(/^VALVEPulp,/.test(byId('AddonSettingsHead').FindChildrenWithClassTraverse('AddonSettingsTitle')[0].applied.fontFamily || ''), 'ADDONS headline uses the game block font by its name (the @define alias does not resolve inline)');
 	assert(byId('IqbTitle').applied.fontWeight === 'bold', 'addon headings are not thin');
 }
 byId('IqbMaster').events.onmouseover();
