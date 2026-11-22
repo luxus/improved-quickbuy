@@ -147,6 +147,17 @@ assert(titleHud && swHud && titleHud.parent === row('hud') && swHud.parent === r
 assert(row('hud').applied.paddingLeft === '28px' && row('runningTotals').applied.paddingLeft === '28px' && !row('hud').kids.some(k => k.cls.has('HudppChildMark')), 'child rows indent with padding, no corner mark');
 assert(!row('count').kids.some(k => k.cls.has('HudppRowDesc')), 'slider row has no description line (HUD++ sliders have no desc tooltip)');
 assert(typeof byId('IqbMaster').events.onmouseover === 'function' && typeof byId('IqbMaster').events.onmouseout === 'function', 'master switch hooks hover for Valve\'s text tooltip');
+{
+	const master = byId('IqbMaster'), row = byId('IqbRow_hud');
+	const track = row.kids.find(p => p.cls.has('HudppSwitch'));
+	const before = [master.applied.backgroundColor, byId('IqbSwitch').applied.backgroundColor, row.applied.backgroundColor, track.applied.backgroundColor];
+	master.events.onmouseover(); row.events.onmouseover();
+	assert(JSON.stringify(before) === JSON.stringify([master.applied.backgroundColor, byId('IqbSwitch').applied.backgroundColor, row.applied.backgroundColor, track.applied.backgroundColor]), 'toggle hover keeps row and track colours unchanged');
+	assert(before[0] === '#ffefd700' && before[1] === '#5fe69e' && before[2] === '#ffefd70a' && before[3] === '#5fe69e', 'colours pinned inline beat HUD++ hover selectors on both kinds of toggle');
+	row.events.onmouseout(); master.events.onmouseout();
+	assert(byId('AddonSettingsHead').FindChildrenWithClassTraverse('AddonSettingsTitle')[0].applied.fontFamily === 'block', 'ADDONS uses the game block headline font with and without CompLock');
+	assert(byId('IqbTitle').applied.fontWeight === 'bold', 'addon headings are not thin');
+}
 byId('IqbMaster').events.onmouseover();
 assert(S.tip && S.tip.p === byId('IqbTitles') && S.tip.text === 'Souls still missing for your quickbuy items, in the HUD and in the shop.', 'hovering the master shows Enable\'s description as Valve\'s text tooltip, anchored on the title block: ' + (S.tip && S.tip.text));
 byId('IqbMaster').events.onmouseout();
