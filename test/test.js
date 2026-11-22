@@ -379,7 +379,8 @@ H.globalClass('gShopOpen', false);
 	const writes = r => (r.classWrites || 0) + (r.textWrites || 0) + (r.styleWrites || 0) + (r.created || 0);
 	start();
 	let r = per(10);
-	assert(r.sched <= 8.1 && r.reads <= 35 && writes(r) === 0, 'play, nothing changes (menu not built yet): reads ' + r.reads + '/s, sched ' + r.sched + '/s, no writes');
+	// 37: the menu look reads #EscapeMenu's .CanChangeHero once per look (4/s) for PLAY's pin
+	assert(r.sched <= 8.1 && r.reads <= 37 && writes(r) === 0, 'play, nothing changes (menu not built yet): reads ' + r.reads + '/s, sched ' + r.sched + '/s, no writes');
 	assert(!byId('IqbEntry4') && !byId('IqbEntry5') && !byId('IqbBadge4') && !byId('IqbBadge5'), 'HUD panels only up to Items Shown (3)');
 	H.menuButton.events.onactivate(); advance(0.5); H.menuButton.events.onactivate(); advance(1);
 	r = per(10);
@@ -623,6 +624,16 @@ withLang(() => { $.Language = () => 'german'; }, () => {
 	const SOULS = { german: 'Seelen', french: 'âmes', spanish: 'almas', latam: 'almas', brazilian: 'almas', italian: 'anime', polish: 'dusz', czech: 'duš', russian: 'душ', ukrainian: 'душ', turkish: 'ruh', indonesian: 'jiwa', thai: 'โซลส์', japanese: 'ソウル', koreana: '영혼', schinese: '魂魄', tchinese: '魂魄' };
 	Object.keys(SOULS).forEach(l => assert(STR[l].Iqb_ShowMissing.toLowerCase().includes(SOULS[l].toLowerCase()) || STR[l].Iqb_ShowMissing_Desc.toLowerCase().includes(SOULS[l].toLowerCase()), l + ': Valve\'s word for Souls (' + SOULS[l] + ')'));
 }
+
+// ===== Esc pins: .CanChangeHero lands on #EscapeMenu after registration, before the first Esc open =====
+for (const k in storage) delete storage[k];
+start();
+assert(byId('AddonSettingsRow') && byId('HudppPlay').applied.marginBottom === '312px', 'fresh start, no CanChangeHero yet: PLAY at 280+32');
+H.esc.cls.add('CanChangeHero'); advance(0.3); // no click of ours: COMPLOCK and ADDONS never opened
+assert(byId('HudppPlay').applied.marginBottom === '382px' && byId('changehero').applied.marginBottom === '312px', 'CanChangeHero arriving later: the next menu look lifts PLAY to 350+32 (PLAY sat on SWAP HERO on the first Esc open, lea 22.11. 11:03 and 11:25)');
+{ S.resetCounts(); advance(10); assert(C.styleWrites === 0, 'class unchanged: no further PLAY writes: ' + C.styleWrites); }
+H.esc.cls.delete('CanChangeHero'); advance(0.3);
+assert(byId('HudppPlay').applied.marginBottom === '312px', 'CanChangeHero gone: PLAY back to 280+32');
 
 console.log(`${passes} passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);
