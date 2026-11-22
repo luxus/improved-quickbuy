@@ -159,7 +159,7 @@ assert(typeof byId('IqbMaster').events.onmouseover === 'function' && typeof byId
 	assert(byId('IqbTitle').applied.fontWeight === 'bold', 'addon headings are not thin');
 }
 byId('IqbMaster').events.onmouseover();
-assert(S.tip && S.tip.p === byId('IqbTitles') && S.tip.text === 'Souls still missing for your quickbuy items, in the HUD and in the shop.', 'hovering the master shows Enable\'s description as Valve\'s text tooltip, anchored on the title block: ' + (S.tip && S.tip.text));
+assert(S.tip && S.tip.p === byId('IqbHead') && S.tip.text === 'Souls still missing for your quickbuy items, in the HUD and in the shop.', 'hovering the master shows Enable\'s description as Valve\'s text tooltip, anchored on the addon header, beside the window: ' + (S.tip && S.tip.text));
 byId('IqbMaster').events.onmouseout();
 assert(!S.tip, 'leaving the row hides the tooltip');
 row('hud').events.onmouseover();
