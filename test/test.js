@@ -114,9 +114,11 @@ assert(byId('IqbBlock') && byId('IqbTitle')._text === 'Quickbuy' && byId('IqbBod
 assert(byId('AddonSettingsMain').applied.width === '100%' && byId('AddonSettingsMain').applied.flowChildren === 'down', 'with HUD++: ADDONS chrome still has width and flow (not skipped because CompLock CSS is present)');
 assert(byId('IqbBody').applied.visibility === 'visible', 'with HUD++: selected body is visibility visible (HUD++ .HudppBody defaults to collapse)');
 {
-	const btn = byId('AddonSettingsButton'), pack = btn && btn.parent;
-	assert(btn && pack && pack.cls.has('HudppMenuRow') && pack.kids.indexOf(btn) === pack.kids.indexOf(byId('HudppMenuButton')) + 1 && !byId('AddonSettingsRow') && btn.applied.marginLeft === '24px', 'with HUD++: ADDONS sits beside COMPLOCK in its row, no extra row');
-	assert(!byId('changehero').applied.marginBottom && !byId('HudppPlay').applied.marginBottom && !byId('changehero').applied.transform && !byId('HudppPlay').applied.transform, 'SWAP HERO and PLAY untouched: no inline margin or transform (PLAY sat on SWAP HERO at lea 22.11. 11:03 and 11:14)');
+	const btn = byId('AddonSettingsButton'), row = byId('AddonSettingsRow');
+	const sub = row && row.parent;
+	const pack = sub && sub.kids.find(k => k.cls.has('HudppMenuRow'));
+	assert(btn && row && btn.parent === row && pack && sub.kids.indexOf(pack) + 1 === sub.kids.indexOf(row), 'with HUD++: ADDONS is its own row immediately below COMPLOCK');
+	assert(byId('changehero').applied.marginBottom === '312px' && byId('HudppPlay').applied.marginBottom === '312px', 'SWAP HERO and PLAY lifted 32px (280+32) so the extra row does not overlap them');
 	assert(byId('IqbBody').FindChildrenWithClassTraverse('HudppSectionTitle').length >= 1, 'ADDONS page has at least one section headline');
 	assert(byId('IqbAuthor')._text === 'by luxus' && !byId('IqbAuthor').cls.has('HudppCreditBy'), 'IQB author comes from the per-addon schema under the name');
 	assert(byId('IqbAuthor').applied.fontSize === '13px' && byId('IqbAuthor').applied.color === '#ffefd799', 'author uses readable small text, not 10 px at one-third opacity');
@@ -128,6 +130,10 @@ assert(byId('IqbBody').applied.visibility === 'visible', 'with HUD++: selected b
 	assert(byId('IqbReset').cls.has('HudppIconButton') && byId('IqbReset').applied.visibility === 'collapse', 'reset is a small icon, hidden until the header is hovered');
 	assert(!byId('AddonSettingsFoot') && byId('AddonSettingsStatus').parent === byId('AddonSettingsHead') && byId('IqbReset').parent.id === 'IqbHead', 'status sits in the window head, no footer strip; per-addon reset stays on the addon header');
 	assert(parseInt(byId('AddonSettingsMain').applied.maxHeight, 10) >= 860, 'the list grows to most of the screen before it scrolls (640 px cut the fifth addon off): ' + byId('AddonSettingsMain').applied.maxHeight);
+	H.esc.cls.add('CanChangeHero');
+	click('AddonSettingsButton'); // close; liftPins refreshes
+	assert(byId('HudppPlay').applied.marginBottom === '382px', 'with CanChangeHero: PLAY lifted 350+32');
+	click('AddonSettingsButton'); // reopen for the rest of this section
 	click('IqbMaster'); advance(0.1);
 	assert(byId('IqbBody').applied.visibility === 'collapse', 'master off hides this addon\'s settings');
 	click('IqbMaster'); advance(0.1);
@@ -402,10 +408,11 @@ buildHud('vanilla'); H.menuButton.parent.DeleteAsync(); S.load(SRC); advance(2);
 assert(S.errors.length === 0 && stripShown() && cells().length === 2, 'no HUD++: HUD row with defaults (3 items, badges), no errors: ' + S.errors.join(' | '));
 {
 	const host = byId('AddonSettingsHost'), button = byId('AddonSettingsButton');
-	assert(host && button && button.parent.cls.has('SettingsRow') && button.parent.parent.id === 'SubOptions', 'no HUD++: ADDONS button joins Valve\'s settings row, window host made');
+	assert(host && button && button.parent.parent.id === 'SubOptions', 'no HUD++: ADDONS button in the Esc menu, window host made');
 	assert(!byId('IqbBody') && host.applied.visibility === 'collapse', 'no HUD++: window closed and our body not built before the first open');
 	assert(!byId('AddonSettingsClose'), 'no HUD++: window head not built before the first open');
-	assert(button.parent.kids[button.parent.kids.length - 1] === button && !byId('AddonSettingsRow') && !byId('changehero').applied.marginBottom, 'no HUD++: ADDONS after SETTINGS and mute, no extra row, SWAP HERO untouched');
+	const sub = button.parent.parent; const order = sub.kids.map(k => k.id || [...k.cls].join('.'));
+	assert(sub.kids.indexOf(button.parent) < sub.kids.findIndex(k => k.cls.has('SettingsRow')) || !sub.kids.some(k => k.cls.has('SettingsRow')), 'ADDONS sits above Valve\'s settings row: ' + order.join(','));
 	S.resetCounts(); advance(60);
 	assert(C.sched / 60 <= 4.01 && S.errors.length === 0, 'no HUD++: no menu check left, only the HUD tick: sched ' + C.sched / 60 + '/s');
 	button.events.onactivate(); advance(0.1);

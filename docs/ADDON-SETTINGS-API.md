@@ -124,12 +124,14 @@ loc files, the same tokens resolve from them with no code change.
 
 ## ADDONS menu and CompLock tabs
 
-- **ADDONS:** the **ADDONS** button joins an existing row in `#SubOptions`: beside COMPLOCK in
-  HUD++'s `.HudppMenuRow`, or after Valve's SETTINGS and mute icon in `.SettingsRow` without HUD++.
-  Both rows are `flow-children: right`, so the menu keeps its height. An own row would grow
-  `#SubOptions` (`vertical-align: bottom; height: fit-children`) upward into `#changehero` and
-  `#HudppPlay`; 1.2.3 lifted those pins with inline margins and PLAY sat on SWAP HERO whenever
-  `.CanChangeHero` arrived later. The host moves no native panel. The panel is 560 px wide and has a CompLock-shaped head (title ADDONS, boxed close
+- **ADDONS:** the **ADDONS** button sits in its own `#AddonSettingsRow` in `#SubOptions`, immediately
+  above Valve's settings row. With HUD++ it is placed directly below the existing COMPLOCK
+  `.HudppMenuRow` (not beside it). `#SubOptions` is `vertical-align: bottom; margin-bottom: 132px;
+  height: fit-children` and `#Menu` is `flow-children: none`, so an extra row grows upward into
+  `#changehero` (`margin-bottom: 280px`) and `#HudppPlay` (`280px`, or `350px` with `.CanChangeHero`).
+  The extra row is 32 px (`.nav_menu_item.minor Label { height: 32px }`); the host adds the same 32 px
+  to those two pins (`312px` / `382px`) so SWAP HERO and PLAY stay in their designed gap above
+  PLAYER FEEDBACK. The panel is 560 px wide and has a CompLock-shaped head (title ADDONS, boxed close
   `HudppIconButton HudppClose`), a scrollable body (`maxHeight` 640 px) listing every ADDONS addon
   vertically, and a shared foot under the body (status only, including `Hudpp_saved` teal for **Saved**).
   Each addon is a header (`AddonSettingsAddonHead`): name on the left, optional `HudppCredit` "by
