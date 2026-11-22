@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -20,6 +22,10 @@ jobs:
         run: sh examples/hello-addon/build.sh && node test/registry.js
       - name: Negative controls (mutants)
         run: sh test/mutants.sh | tee mutants.txt && ! grep -q -e SURVIVED -e BROKEN mutants.txt
+      - name: Guards against repeated mistakes
+        run: |
+          git fetch origin main
+          for f in tools/guard-*.js; do echo "== $f =="; node "$f" || exit 1; done
       - name: Release artifacts match their digests
         run: |
           mkdir -p /tmp/rel
