@@ -16,8 +16,11 @@ Addon Settings 1.2.4 (`BUILD` 11; build 10 was an unshipped test) changes the AD
 - The status ("Saved") sits in the window head; the empty footer strip is gone.
 - The author line under each addon name is 13 px at 60 % instead of 10 px at 33 %.
 - Toggle hover no longer changes a background colour. Row and switch colours are inline, so HUD++'s `:hover` rules do not apply to them.
-- The ADDONS headline uses the game's `block` font without HUD++ too; addon names are bold.
-- The master switch tooltip opens from the title block, so it is not cut off at the right edge.
+- Addon names are bold.
+- The window may take 98 % of the Esc menu area (it measured 875 px at 90 %); section titles have 6 px less margin.
+- An addon with only a master switch is one row: its empty settings body collapses. Cards are 10 px apart.
+- The master switch tooltip opens beside the window, like the row tooltips, instead of over the switch.
+- The ADDONS headline names the block font (`VALVEPulp`); an inline `block` alias rendered thin.
 
 ### Fixed
 
