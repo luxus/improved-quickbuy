@@ -616,5 +616,20 @@ assert(byId('HudppPlay').applied.marginBottom === '382px' && byId('changehero').
 H.esc.cls.delete('CanChangeHero'); advance(0.3);
 assert(byId('HudppPlay').applied.marginBottom === '312px', 'CanChangeHero gone: PLAY back to 280+32');
 
+// Regression: invalidated #IqbQueueTotal recovers within RECHECK, and a drifted QuickbuyItem without ModCost/ModName does not crash
+{
+	for (const k in storage) delete storage[k];
+	start();
+	H.globalClass('gShopOpen', true); advance(0.5);
+	const oldTot = byId('IqbQueueTotal');
+	assert(!!oldTot && total().length > 0, 'shop queue total shown before invalidation');
+	oldTot.DeleteAsync();
+	advance(6);
+	assert(S.errors.length === 0 && !!byId('IqbQueueTotal') && total().length > 0, 'invalidated #IqbQueueTotal recreated cleanly: ' + S.errors.join(' | '));
+	S.mk('Panel', H.queue, 'EmptyEntry', 'QuickbuyItem');
+	advance(0.5);
+	assert(S.errors.length === 0, 'entry missing ModCost and ModName does not throw: ' + S.errors.join(' | '));
+}
+
 console.log(`${passes} passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

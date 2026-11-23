@@ -3,8 +3,9 @@
 set -e
 cd "$(dirname "$0")/.."
 rm -rf build/pak && mkdir -p build/pak/panorama/scripts build/pak/panorama/styles build/pak/panorama/layout
+VER=$(sed -n "s/^const VERSION = '\\([^']*\\)';/\\1/p" src/main.js | head -n 1)
 {
-	echo '// Improved Quickbuy v10 - built from src/ by tools/build.sh; inspired by Enhanced Quickbuy (gamebanana.com/mods/664041), no code of it included.'
+	echo "// Improved Quickbuy $VER - built from src/ by tools/build.sh; inspired by Enhanced Quickbuy (gamebanana.com/mods/664041), no code of it included."
 	echo '(() => {'
 	echo "'use strict';"
 	sh lib/addon-settings/vendor.sh print
