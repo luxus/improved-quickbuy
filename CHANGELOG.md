@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-Test build of Improved Quickbuy 1.0.4 / Addon Settings 1.2.3. Not tagged or published yet.
+## [1.0.4] - 2026-11-23
 
 Addon Settings 1.2.4 (`BUILD` 11; build 10 was an unshipped test) changes the ADDONS window:
 
@@ -75,7 +75,8 @@ First public release.
 - [Addon Settings](https://github.com/luxus/improved-quickbuy/blob/main/docs/ADDON-SETTINGS-API.md), the settings library behind the tab and the window, which other mods can vendor for their own tabs (`lib/addon-settings/`, example in `examples/hello-addon`).
 - Rewritten from scratch with performance in mind.
 
-[Unreleased]: https://github.com/luxus/improved-quickbuy/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/luxus/improved-quickbuy/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/luxus/improved-quickbuy/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/luxus/improved-quickbuy/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/luxus/improved-quickbuy/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/luxus/improved-quickbuy/compare/v1.0.0...v1.0.1
