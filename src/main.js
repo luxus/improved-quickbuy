@@ -100,6 +100,7 @@ const readList = (list, limit, out, len) => {
 			n++;
 		}
 	}
+	for (let k = n; k < len.n; k++) out[k] = null;
 	if (n !== len.n) { len.n = n; changed = true; }
 	return changed;
 };
@@ -111,6 +112,7 @@ const readDeep = (list, limit, out, len) => {
 		if (!e) { e = newParts(all[i]); partsKnown.set(all[i], e); }
 		e.gen = gen; out[n++] = e; readEntry(e);
 	}
+	for (let k = n; k < len.n; k++) out[k] = null;
 	len.n = n;
 	return true;
 };
@@ -121,7 +123,10 @@ const sweepParts = () => {
 		partsKnown.delete(entry);
 	});
 };
-const forget = () => { found = {}; miss = {}; partsKnown = new Map(); soulsText = null; queueLen.n = 0; sellLen.n = 0; };
+const forget = () => {
+	found = {}; miss = {}; partsKnown = new Map(); soulsText = null; queueLen.n = 0; sellLen.n = 0;
+	if (totalLabel && !ok(totalLabel)) { totalLabel = null; totalText = ''; totalOn = false; }
+};
 
 // ---------- item icons, from Valve's abilities.vdata (src/items.gen.js) ----------
 let iconTable = null;
@@ -133,8 +138,10 @@ const iconFor = (e, name) => {
 		iconTable = new Map();
 		IQB_ITEM_ICONS_PACKED.split(';').forEach(pair => { const i = pair.indexOf('>'); if (i > 0) iconTable.set(pair.slice(0, i), pair.slice(i + 1)); });
 	}
-	const rel = iconTable.get(String(name).toLowerCase().split(/[\W_]+/).join('')) || '';
-	e.kind = rel ? rel.slice(0, rel.indexOf('/')) : '';
+	const key = e.key || String(name).toLowerCase().split(/[\W_]+/).join('');
+	const rel = iconTable.get(key) || '';
+	const slash = rel.indexOf('/');
+	e.kind = slash > 0 ? rel.slice(0, slash) : '';
 	e.icon = src || (rel ? 's2r://panorama/images/items/' + rel + '_psd.vtex' : '');
 };
 
@@ -209,11 +216,13 @@ const paintSlot = (s, r, badges) => {
 };
 
 const tagFor = e => {
-	if (e.tag) return e.tag;
-	const entry = e.cost && e.cost.GetParent() ? e.cost.GetParent() : null;
-	const left = entry ? entry.FindChild('IqbRunning') : null; // made earlier for this entry panel
+	if (ok(e.tag)) return e.tag;
+	e.tag = null;
+	const parent = (ok(e.cost) && e.cost.GetParent()) || (ok(e.name) && e.name.GetParent()) || null;
+	if (!ok(parent)) return null;
+	const left = parent.FindChild('IqbRunning'); // made earlier for this entry panel
 	if (ok(left)) { e.tag = left; e.tagOn = left.style.visibility === 'visible'; e.tagText = left.text; return left; }
-	const tag = make('Label', entry || e.name.GetParent(), 'IqbRunning', 'IqbRunning');
+	const tag = make('Label', parent, 'IqbRunning', 'IqbRunning');
 	tag.hittest = false;
 	tag.style.marginLeft = '6px';
 	tag.style.fontSize = '14px';
@@ -223,15 +232,20 @@ const tagFor = e => {
 	return tag;
 };
 const showTag = (e, on, t) => {
-	if (on && e.tagText !== t) { e.tagText = t; tagFor(e).text = t; }
-	if (e.tagOn !== on) { e.tagOn = on; tagFor(e).style.visibility = on ? 'visible' : 'collapse'; }
+	const tag = on || e.tagOn ? tagFor(e) : null;
+	if (!tag) return;
+	if (on && e.tagText !== t) { e.tagText = t; tag.text = t; }
+	if (e.tagOn !== on) { e.tagOn = on; tag.style.visibility = on ? 'visible' : 'collapse'; }
 };
 
 let totalLabel = null, totalText = '', totalOn = false;
 const totalFor = () => {
-	if (totalLabel) return totalLabel;
+	if (ok(totalLabel)) return totalLabel;
+	totalLabel = null; totalText = ''; totalOn = false;
 	const outer = lookup('outer', () => { const q = own('QuickBuyQueueContainer'); const f = ok(q) ? q.FindChildrenWithClassTraverse('QuickbuyQueueOuter') : null; return f && f.length ? f[0] : null; });
-	if (!outer) return null;
+	if (!ok(outer)) return null;
+	const existing = outer.FindChild('IqbQueueTotal');
+	if (ok(existing)) { totalLabel = existing; totalOn = existing.style.visibility === 'visible'; totalText = existing.text; return totalLabel; }
 	totalLabel = make('Label', outer, 'IqbQueueTotal', 'IqbQueueTotal');
 	totalLabel.hittest = false;
 	totalLabel.style.visibility = 'collapse';
@@ -288,7 +302,7 @@ const sums = []; const missing = []; const used = [];
 let soulsText = null, souls = 0, available = 0;
 const RECHECK = 20; // ticks
 let checks = 0;
-const stillThere = key => !found[key] || found[key].IsValid();
+const stillThere = key => !found[key] || ok(found[key]);
 
 const update = () => {
 	timer = null;
@@ -306,7 +320,7 @@ const update = () => {
 	}
 
 	// the panels we read are kept without an IsValid() per look; every 5 s one look makes sure they are still there
-	if (++checks >= RECHECK) { checks = 0; if (!stillThere('QuickbuyQueue') || !stillThere('QuickbuySellQueue') || !stillThere('souls')) { forget(); dirty = true; } }
+	if (++checks >= RECHECK) { checks = 0; if (!stillThere('QuickbuyQueue') || !stillThere('QuickbuySellQueue') || !stillThere('souls') || !stillThere('stats') || !stillThere('outer') || (totalLabel && !ok(totalLabel))) { forget(); dirty = true; } }
 
 	// inputs
 	let changed = readList(own('QuickbuyQueue'), hud ? cfg.count : 99, queueRows, queueLen);

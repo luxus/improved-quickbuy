@@ -145,5 +145,40 @@ assert(byId('HelloReset') && byId('HelloReset').applied.visibility === 'collapse
 assert(!S.errors.some(e => /read only property 'id'|window: TypeError/.test(e)), 'legacy + IQB mount does not assign panel.id');
 assert(S.info.some(m => /Esc menu: found looks=/.test(m)), 'Esc lookup logs the result and the look count');
 
+// Multi-layout same-id registration: a HUD registrar and two later UI layouts share one schema.id.
+// Stored settings must reach every layout on load, live toggles must reach all open layouts, and
+// destroyed layouts must clean up their AddonSettingsSub panel.
+{
+	const makeMulti = tag => '(() => {\n' + LIB
+		+ '\nconst panel = $.GetContextPanel();'
+		+ '\nconst S = { id: \'multi_mod\', title: \'Multi\', prefix: \'Multi\', placement: \'addons\', toggle: \'on\', controls: ['
+		+ '{ key: \'on\', type: \'toggle\', title: \'On\', default: true },'
+		+ '{ key: \'sub\', type: \'toggle\', title: \'Sub\', default: true, needs: [\'on\'] }'
+		+ '] };'
+		+ '\nAddonSettings.register(S, v => { panel.SetAttributeString(\'seen_' + tag + '\', JSON.stringify(v)); });'
+		+ '\n})();';
+	clear();
+	storage.multi_mod_settings = JSON.stringify({ on: true, sub: false });
+	buildHud('vanilla');
+	const hud = S.mk('Panel', H.root, 'MultiHud');
+	const layA = S.mk('Panel', H.root, 'MultiA');
+	const layB = S.mk('Panel', H.root, 'MultiB');
+	H.ctx = hud; S.load(makeMulti('hud')); advance(2);
+	H.ctx = layA; S.load(makeMulti('a')); advance(0.2);
+	H.ctx = layB; S.load(makeMulti('b')); advance(0.2);
+	assert(JSON.parse(layA.attrs.seen_a || '{}').sub === false, 'multi-layout: layout A receives stored sub=false on load');
+	assert(JSON.parse(layB.attrs.seen_b || '{}').sub === false, 'multi-layout: layout B receives stored sub=false on load');
+	openAddons();
+	click('MultiMaster'); advance(0.2);
+	assert(JSON.parse(layA.attrs.seen_a || '{}').on === false && JSON.parse(layB.attrs.seen_b || '{}').on === false, 'multi-layout: live toggle OFF updates both open layouts');
+	const client = byId('AddonSettingsClient_multi_mod');
+	const subsBefore = client.GetChildCount();
+	layB.DeleteAsync();
+	click('MultiMaster'); advance(0.2);
+	assert(JSON.parse(layA.attrs.seen_a || '{}').on === true, 'multi-layout: live toggle ON updates surviving layout A');
+	assert(client.GetChildCount() === subsBefore - 1, 'multi-layout: destroyed layout B subscriber panel is pruned');
+	errorsOk('multi-layout');
+}
+
 console.log(`${passes} passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);
