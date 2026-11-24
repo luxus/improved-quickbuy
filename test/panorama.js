@@ -72,7 +72,16 @@ global.$ = {
 	},
 	Schedule: (t, f) => { C.sched++; const j = { due: now + Math.max(0, t), f, id: ++seq }; jobs.push(j); return j.id; },
 	CancelScheduled: id => { jobs = jobs.filter(j => j.id !== id); },
-	DispatchEvent(ev, p, arg) { C.dispatches = (C.dispatches || 0) + 1; if (ev === 'Activated' && p && p.valid && p.events.onactivate) p.events.onactivate(); if (ev === 'UIShowTextTooltip') { tip = { p: p, text: arg == null ? '' : String(arg) }; tips.push({ ev: ev, p: p, text: tip.text }); } if (ev === 'UIHideTextTooltip') { tips.push({ ev: ev, p: p }); if (tip && tip.p === p) tip = null; } }, Localize: s => s, Msg: m => { (INFO.test(m) ? info : errors).push('msg: ' + m); },
+	DispatchEvent(ev, p, arg) {
+		C.dispatches = (C.dispatches || 0) + 1;
+		if (ev === 'Activated') {
+			for (let cur = p; cur && cur.valid; cur = cur.parent) {
+				if (cur.events && cur.events.onactivate) { cur.events.onactivate(); break; }
+			}
+		}
+		if (ev === 'UIShowTextTooltip') { tip = { p: p, text: arg == null ? '' : String(arg) }; tips.push({ ev: ev, p: p, text: tip.text }); }
+		if (ev === 'UIHideTextTooltip') { tips.push({ ev: ev, p: p }); if (tip && tip.p === p) tip = null; }
+	}, Localize: s => s, Msg: m => { (INFO.test(m) ? info : errors).push('msg: ' + m); },
 	RegisterForUnhandledEvent: (ev, f) => handlers.push({ ev, p: null, f }),
 	RegisterEventHandler: (ev, p, f) => { const id = ++seq; handlers.push({ ev, p, f, id }); return id; },
 	UnregisterEventHandler: (ev, p, id) => { handlers = handlers.filter(h => h.id !== id); }
